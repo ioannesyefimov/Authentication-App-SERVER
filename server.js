@@ -2,10 +2,10 @@ import express from 'express'
 import * as dotenv from 'dotenv'
 import cors from 'cors'
 import bodyParser from 'body-parser'
-
+dotenv.config()
 
 import {  GoogleRoute, GitHubRoute} from './Routes/index.js'
-export let DB = []
+import connectDB from './MongoDb/connect.js'
 const app = express();
 
 app.use(
@@ -13,9 +13,9 @@ app.use(
 )
 app.use(bodyParser.json())
 
+app.use(express.json({limit: '50mb'}));
 app.use(express.json())
 
-app.use(express.json({limit: '50mb'}));
 
 // app.use('/api/auth/register', RegisterRoute)
 // app.use('/api/auth/signin', SignInRoute)
@@ -23,8 +23,19 @@ app.use(express.json({limit: '50mb'}));
 app.use('/api/auth/github', GitHubRoute)
 app.use('/api/auth/google', GoogleRoute)
 
-
-
 const PORT = process.env.PORT || 5050
 
-app.listen(PORT, () => console.log(`Server is running on ${PORT} `))
+const StartServer = async ()=>{
+    console.log(process.env.MONGODB_URL)
+    try {
+        connectDB(process.env.MONGODB_URL);
+        app.listen(PORT, () => console.log(`Server is running on ${PORT} `))
+
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+StartServer()
+
+

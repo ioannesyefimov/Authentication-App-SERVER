@@ -1,7 +1,6 @@
 import express from 'express'
 import * as dotenv from "dotenv"
 import  verifyGoogleToken  from '../SocialAuth/googleAuth.js'
-import { DB } from '../server.js'
 
 import jwt from 'jsonwebtoken'
 
@@ -61,7 +60,6 @@ router.route('/register').post(async(req,res)=>{
             };
             const profile = verificationResponse?.payload;
     
-            DB.push(profile)
     
             res.status(201).json({
                 message: "Register was successful",
@@ -70,11 +68,11 @@ router.route('/register').post(async(req,res)=>{
                     lastName: profile?.family_name,
                     picture: profile?.picture,
                     email: profile?.email,
-                    token: jwt.sign({email: profile?.email}, process.env.JWT_SECRET, {
-                        expiresIn: "1d",
-                    }),
+                    
                 },
-            
+                token: jwt.sign({email: profile?.email}, process.env.JWT_SECRET, {
+                    expiresIn: "1d",
+                }),
             });
         }
         
