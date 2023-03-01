@@ -1,12 +1,14 @@
 import express from 'express';
 import  fetch from 'node-fetch';
 import * as dotenv from 'dotenv';
+import {Octokit} from 'octokit'
 
 dotenv.config()
 const router = express.Router()
 
+
 router.route('/getAccessToken').get( async (req,res) =>{
-    const params = `?client_id=${process.env.GITHUB_CLIENT_ID}&client_secret=${process.env.GITHUB_CLIENT_SECRET}&code=${req.query.code}&scope=user,user:email`
+    const params = `?client_id=${process.env.GITHUB_CLIENT_ID}&client_secret=${process.env.GITHUB_CLIENT_SECRET}&code=${req.query.code}&scope=user`
 
     await fetch("https://github.com/login/oauth/access_token" + params, {
         method: "POST",
@@ -23,23 +25,32 @@ router.route('/getAccessToken').get( async (req,res) =>{
 
 router.route("/getUserData").get( async(req,res)=>{
    const accessTok = req.get('Authorization')  // Bearer ACCESSTOKEN
-    const basicUser = await fetch('https://api.github.com/user', {
-        method: "GET",
+   const octokit = new Octokit({
+    auth: accessTok
+})
+console.log(accessTok)
+    const basicUser = await octokit.request('GET /user', {
         headers: {
-            "Authorization": accessTok
-        }
+            'X-GitHub-Api-Version': '2022-11-28'
+          }
     })
-    const response1 = await basicUser.json()
-    const userEmail = await fetch('https://api.github.com/user/emails', {
-            method:"GET",
-            headers:{
-                "Authorization": accessTok
-            }
-        })
-    const response2 = await userEmail.json()
-    console.log(response1)
-    console.log(response2)
-    res.status(200).send({success: true, data: {response1, response2}})
+    const user = await basicUser.data
+    // const basicUser = await fetch('https://api.github.com/user', {
+    //     method: "GET",
+    //     headers: {
+            
+    //     }
+    // })
+    // const userEmail = await octokit.request('GET /user/emails', {
+    //     headers: {
+    //         'X-GitHub-Api-Version': '2022-11-28'
+    //       }
+    //     })
+            
+    // const response1 = await basicUser.json()
+    // const response2 = await userEmail.json()
+    // console.log(userEmail)
+    res.status(200).send({success: true, data: {user}})
 })
 
 export default router
