@@ -3,6 +3,7 @@ import * as dotenv from "dotenv"
 import  verifyGoogleToken  from '../SocialAuth/googleAuth.js'
 
 import jwt from 'jsonwebtoken'
+import User from '../MongoDb/models/user.js'
 
 dotenv.config()
 
@@ -13,15 +14,16 @@ router.route('/signin').post(async(req,res)=>{
     try {
         if(req.body.credential) {
             const verificationResponse = await verifyGoogleToken(req.body.credential)
-            console.log(verificationResponse)
+            // console.log(verificationResponse)
             if(verificationResponse.error) {
                 return res.status(400).json({message: verificationResponse.error})
             };
 
         }
         const profile = verificationResponse?.payload;
+        console.log(profile.email)
 
-        const existsInDb = DB.find((person)=> person?.email === profile?.email)
+        // const existsInDb = User.find()
 
         if(!existsInDb){
             return res.status(400).json({
@@ -36,7 +38,8 @@ router.route('/signin').post(async(req,res)=>{
                 lastName: profile?.family_name,
                 picture: profile?.picture,
                 email: profile?.email,
-                token: jwt.sign({email: profile?.email}, process.env.JWT_SECRET, {
+                refreshToken: jwt.sign({email: profile?.email}, process.env.JWT_REFRESH_TOKEN_SECRET),
+                accessToken: jwt.sign({email: profile?.email}, process.env.JWT_TOKEN_SECRET, {
                     expiresIn: "1d",
                 }),
             },

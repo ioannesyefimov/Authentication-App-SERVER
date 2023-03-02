@@ -35,21 +35,7 @@ console.log(accessTok)
           }
     })
     const user = await basicUser.data
-    // const basicUser = await fetch('https://api.github.com/user', {
-    //     method: "GET",
-    //     headers: {
-            
-    //     }
-    // })
-    // const userEmail = await octokit.request('GET /user/emails', {
-    //     headers: {
-    //         'X-GitHub-Api-Version': '2022-11-28'
-    //       }
-    //     })
-            
-    // const response1 = await basicUser.json()
-    // const response2 = await userEmail.json()
-    // console.log(userEmail)
+
     res.status(200).send({success: true, data: {user}})
 })
 

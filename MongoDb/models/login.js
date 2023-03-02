@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-var validateEmail = function(email) {
+let validateEmail = function(email) {
     const regex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/; 
        return regex.test(email)
 };
@@ -18,6 +18,9 @@ const Login = new mongoose.Schema({
     password: {
         type: String,
         required: true
+    },
+    refreshToken : {
+        type: String,
     }
 })
 
@@ -33,4 +36,5 @@ Login.set('toJSON', {
 })
 const LoginSchema = mongoose.model('Login', Login)
 
-export default LoginSchema
+
+export default LoginSchema 

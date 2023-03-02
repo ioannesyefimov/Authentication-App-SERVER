@@ -1,14 +1,16 @@
 import express from 'express'
 import * as dotenv from "dotenv"
-import  verifyGoogleToken  from '../SocialAuth/googleAuth.js'
-import mongoose from 'mongoose'
-import { DB } from '../server.js'
+import bcrypt from 'bcrypt'
 
 import jwt from 'jsonwebtoken'
 import { conn } from '../MongoDb/connect.js'
 import { validatePassword, Errors } from '../utils.js'
 
-import {Login, User} from '../MongoDb/models/index.js'
+import User from '../MongoDb/models/user.js'
+import Login from '../MongoDb/models/login.js'
+import Token from '../MongoDb/models/token.js'
+import { generateAccessToken, generateRefreshToken } from './tokenRoute.js'
+
 dotenv.config();
  
 
@@ -19,6 +21,9 @@ router.route('/').post(async(req,res)=>{
         const session = await conn.startSession()
 
         const {fullName, email, password, picture} = req.body
+        const userCredentials = {
+            fullName, email, picture
+        }
         // validate form submission
         if(!fullName|| !email|| !password) {
             return res.status(400).json(`incorrect form submission`)
@@ -51,7 +56,16 @@ router.route('/').post(async(req,res)=>{
                 }
             ]);
             console.log(`success`)
-            res.status(201).json({success:true,data:user});
+        const refreshToken = generateRefreshToken(userCredentials)
+        const accessToken = generateAccessToken(userCredentials)
+
+        await Token.create([
+            {
+                refreshToken: refreshToken
+            }
+        ]);
+            res.status(201).json({success:true,data:{user, accessToken, refreshToken}});
+           await session.commitTransaction(); 
             session.endSession()
         })
     

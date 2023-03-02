@@ -1,6 +1,7 @@
 import GoogleRoute from './googleAuth.js'
-// import SignInRoute from './SingInRoute.js'
+import SignInRoute from './SingInRoute.js'
+import RegisterRoute from './RegisterRoute.js'
 import GitHubRoute from './githubAuthRoute.js'
 export {
-     GoogleRoute,GitHubRoute
+ SignInRoute, GoogleRoute,GitHubRoute, RegisterRoute
 }

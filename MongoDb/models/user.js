@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-var validateEmail = function(email) {
+let validateEmail = function(email) {
     const regex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/; 
        return regex.test(email)
 };
@@ -29,6 +29,6 @@ User.set('toJSON', {
         delete ret.__v;
     }
 })
-const UserSchema = mongoose.model('User', User)
+const UserSchema = mongoose.model('User', User) || mongoose.model('User')
 
 export default UserSchema
