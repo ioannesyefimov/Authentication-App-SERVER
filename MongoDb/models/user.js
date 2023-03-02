@@ -14,19 +14,25 @@ const User = new mongoose.Schema({
         unique: true,
         required: 'Email address is required',
         validate: [validateEmail, 'Please fill a valid email address'],
+        
         // match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Please fill a valid email address'],
     },
-    picture: {type: String}
-})
+    picture: {type: String},
+     
+}, {versionKey: false })
 
 
 User.set('toJSON', {
     virtuals: true,
-    transform: function(doc, ret, options){
-        ret.dbID = ret._id;
-        delete ret.id
-        delete ret._id;
-        delete ret.__v;
+    transform: (doc,result) => {
+        return {
+            ...result,
+            id: result._ID
+        }
+        // ret.dbID = ret._id;
+        // delete ret.id
+        // delete ret._id;
+        // delete ret.__v;
     }
 })
 const UserSchema = mongoose.model('User', User) || mongoose.model('User')

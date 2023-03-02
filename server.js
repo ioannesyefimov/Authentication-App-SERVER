@@ -4,7 +4,7 @@ import cors from 'cors'
 import bodyParser from 'body-parser'
 dotenv.config()
 
-import {  GoogleRoute, GitHubRoute, RegisterRoute, SignInRoute} from './Routes/index.js'
+import {  GoogleRoute, GitHubRoute, RegisterRoute, SignInRoute, TokenRoute} from './Routes/index.js'
 import connectDB from './MongoDb/connect.js'
 const app = express();
 
@@ -22,6 +22,8 @@ app.use('/api/auth/signin', SignInRoute)
 
 app.use('/api/auth/github', GitHubRoute)
 app.use('/api/auth/google', GoogleRoute)
+
+app.use("/api/auth/token", TokenRoute)
 
 const PORT = process.env.PORT || 5050
 

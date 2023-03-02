@@ -6,18 +6,18 @@ const refreshToken = new mongoose.Schema({
     refreshToken : {
         type: String,
     }
-})
+}, {versionKey: false })
 
 
-refreshToken.set('toJSON', {
-    virtuals: true,
-    transform: function(doc, ret, options){
-        ret.dbID = ret._id;
-        delete ret.id
-        delete ret._id;
-        delete ret.__v;
-    }
-})
+refreshToken.method('transform', function() {
+    let obj = this.toObject();
+
+    //Rename fields
+    obj.id = obj._id;
+    delete obj._id;
+
+    return obj;
+});
 const refreshTokenScheme = mongoose.model('refreshToken', refreshToken)
 
 

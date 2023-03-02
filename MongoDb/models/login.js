@@ -21,17 +21,23 @@ const Login = new mongoose.Schema({
     },
     refreshToken : {
         type: String,
-    }
-})
+    },
+    
+
+}, {versionKey: false })
 
 
 Login.set('toJSON', {
     virtuals: true,
-    transform: function(doc, ret, options){
-        ret.dbID = ret._id;
-        delete ret.id
-        delete ret._id;
-        delete ret.__v;
+    transform: (doc,result) => {
+        return {
+            ...result,
+            id: result._ID
+        }
+        // ret.dbID = ret._id;
+        // delete ret.id
+        // delete ret._id;
+        // delete ret.__v;
     }
 })
 const LoginSchema = mongoose.model('Login', Login)

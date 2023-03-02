@@ -36,7 +36,12 @@ console.log(accessTok)
     })
     const user = await basicUser.data
 
-    res.status(200).send({success: true, data: {user}})
+    
+
+    res.status(200).send({success: true, data: {
+        user,
+        refreshToken: generateRefreshToken(user),
+    }})
 })
 
 export default router

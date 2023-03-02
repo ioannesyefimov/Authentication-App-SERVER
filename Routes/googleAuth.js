@@ -4,6 +4,9 @@ import  verifyGoogleToken  from '../SocialAuth/googleAuth.js'
 
 import jwt from 'jsonwebtoken'
 import User from '../MongoDb/models/user.js'
+import Token from '../MongoDb/models/token.js'
+import { generateAccessToken, generateRefreshToken } from './tokenRoute.js'
+import { conn } from '../MongoDb/connect.js'
 
 dotenv.config()
 
@@ -13,6 +16,7 @@ router.route('/signin').post(async(req,res)=>{
     
     try {
         if(req.body.credential) {
+            console.log(req.body.credential)
             const verificationResponse = await verifyGoogleToken(req.body.credential)
             // console.log(verificationResponse)
             if(verificationResponse.error) {
@@ -21,9 +25,10 @@ router.route('/signin').post(async(req,res)=>{
 
         }
         const profile = verificationResponse?.payload;
-        console.log(profile.email)
+        console.log(profile)
 
-        // const existsInDb = User.find()
+        const existsInDb = User.find({email:profile.email})
+        console.log(existsInDb)
 
         if(!existsInDb){
             return res.status(400).json({
@@ -55,31 +60,47 @@ router.route('/register').post(async(req,res)=>{
     
     try {
         if(req.body.credential) {
+            const session = await conn.startSession()
             const verificationResponse = await verifyGoogleToken(req.body.credential)
-            console.log(verificationResponse)
             if(verificationResponse.error) {
 
-                // return res.status(400).json({message: verificationResponse.error})
+                return res.status(400).json({message: verificationResponse.error})
             };
             const profile = verificationResponse?.payload;
+            
     
-    
-            res.status(201).json({
-                message: "Register was successful",
-                user: {
-                    firstName: profile?.given_name,
-                    lastName: profile?.family_name,
+            await session.withTransaction(async()=>{
+                let user = {
+                    fullName: `${profile?.given_name} ${profile?.family_name}`,
                     picture: profile?.picture,
                     email: profile?.email,
-                    
-                },
-                token: jwt.sign({email: profile?.email}, process.env.JWT_SECRET, {
-                    expiresIn: "1d",
-                }),
-            });
+                        
+                }
+              
+                const dbUser = await User.create([
+                    {
+                        email: user?.email,
+                        fullName: user?.fullName,
+                        picture: user?.picture,
+                    }
+                ]);
+                console.log(`success`)
+            const refreshToken = generateRefreshToken(user)
+    
+            await Token.create([
+                {
+                    refreshToken: refreshToken
+                }
+            ]);
+                res.status(201).send({success:true,data:{user, refreshToken}});
+               await session.commitTransaction(); 
+                session.endSession()
+            })
+           
         }
         
     } catch (error) {
+        console.log(error)
         res.status(500).json({
             message: "An error occured. Registration failed"
         })
