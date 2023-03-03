@@ -64,14 +64,14 @@ router.route('/').post(async(req,res)=>{
                 refreshToken: refreshToken
             }
         ]);
-            res.status(201).json({success:true,data:{user, accessToken, refreshToken}});
+            res.status(201).send({success:true,data:{user, accessToken, refreshToken}});
            await session.commitTransaction(); 
             session.endSession()
         })
     
     } catch (error) {
         console.log(`error: `, error)
-        res.status(500).json({success:false, message: error})
+        res.status(500).send({success:false, message: error})
     }
 })
 

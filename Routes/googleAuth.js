@@ -82,6 +82,7 @@ router.route('/register').post(async(req,res)=>{
                         email: user?.email,
                         fullName: user?.fullName,
                         picture: user?.picture,
+                        loggedThrough: 'Google'
                     }
                 ]);
                 console.log(`success`)

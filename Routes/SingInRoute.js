@@ -38,16 +38,20 @@ router.route('/').post(async(req,res)=>{
         if(!email || !password) return res.status(400).send({success:false, message:`INCORRECT_FORM_SUBMISSION`})
 
         console.log(email)
-        const isRegister =  await Login.find({email: email})
-        if(isRegister == null || undefined || isRegister.length < 1) res.status(404).send({success:false, message: `NOT_FOUND`})
-        const isValid= bcrypt.compareSync(password, isRegister[0].password)
-        console.log(isValid)
-        if(isValid){
-           const USER = await User.find({email:email})
-           if(USER) {
+        const USER = await User.find({email:email})
+        if(USER == null || undefined || USER.length < 1) res.status(404).send({success:false, message: `NOT_FOUND`})
+        if(USER){
+            const isRegister =  await Login.find({email: email})
+            console.log(USER)
+           if(isRegister.length !== 0) {
+            console.log(isRegister)
+
             let user = {fullName: USER[0].fullName, email: USER[0].email}
             const accessToken = generateAccessToken(user);
-            return  res.status(200).send({success:true, data: {user: USER[0], token:accessToken}})
+            return
+        } else {
+            console.log(isRegister)
+            return res.status(404).send({success:false, message: `LOGGED_THROUGH_SOCIAL`})
            }
         } else if(!isValid){
             return res.status(400).send({success:false, message: `WRONG_PASSWORD`})
