@@ -19,6 +19,7 @@ router.route('/').post(async(req,res)=>{
     try {
         const {email, password, accessToken} = req.body
         
+        
         if(accessToken){
             return jwt.verify(accessToken, process.env.JWT_TOKEN_SECRET, (err,result) => {
                 if(err) {
@@ -47,11 +48,11 @@ router.route('/').post(async(req,res)=>{
             console.log(isRegister)
 
             let user = {fullName: USER[0].fullName, email: USER[0].email}
-            const accessToken = generateAccessToken(user);
-            return
+            const GeneratedToken = generateAccessToken(user);
+            return res.status(200).send({success:true, data: {user, GeneratedToken}})
         } else {
             console.log(isRegister)
-            return res.status(404).send({success:false, message: `LOGGED_THROUGH_SOCIAL`})
+            return res.status(400).send({success:false, message: `LOGGED_THROUGH_SOCIAL`, social: USER[0]?.loggedThrough})
            }
         } else if(!isValid){
             return res.status(400).send({success:false, message: `WRONG_PASSWORD`})

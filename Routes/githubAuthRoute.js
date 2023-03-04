@@ -5,6 +5,8 @@ import {Octokit} from 'octokit'
 import { conn } from '../MongoDb/connect.js';
 import User from '../MongoDb/models/user.js'
 import Token from '../MongoDb/models/token.js'
+import { generateAccessToken } from './tokenRoute.js';
+
 dotenv.config()
 const router = express.Router()
 
@@ -25,14 +27,14 @@ router.route('/getAccessToken').get( async (req,res) =>{
     })
 })
 
-router.route("/getUserData").get( async(req,res)=>{
+router.route("/register").get( async(req,res)=>{
     try {
         const session = await conn.startSession()
         const accessTok = req.get('Authorization')  // Bearer ACCESSTOKEN
         const octokit = new Octokit({
          auth: accessTok
      })
-     console.log(accessTok)
+    //  console.log(accessTok)
          const basicUser = await octokit.request('GET /user', {
              headers: {
                  'X-GitHub-Api-Version': '2022-11-28'
@@ -40,6 +42,7 @@ router.route("/getUserData").get( async(req,res)=>{
          })
          const GHuser = await basicUser.data
          GHuser.loggedThrough = 'Github'
+         console.log(GHuser)
 
          await session.withTransaction(async()=>{
             let user = {
@@ -54,14 +57,14 @@ router.route("/getUserData").get( async(req,res)=>{
                 user
             ]);
             console.log(`success`)
-        const refreshToken = generateRefreshToken(user)
+        const GeneratedRefreshToken = generateRefreshToken(user)
 
         await Token.create([
             {
                 refreshToken: refreshToken
             }
         ]);
-            res.status(201).send({success:true,data:{user, refreshToken}});
+            res.status(201).send({success:true,data:{user: {user}, token: {GeneratedRefreshToken}}});
            await session.commitTransaction(); 
             session.endSession()
         })
@@ -72,4 +75,51 @@ router.route("/getUserData").get( async(req,res)=>{
     }
 })
 
+
+
+router.route("/signin").get( async(req,res)=>{
+    try {
+        const session = await conn.startSession()
+        const accessTok = req.get('Authorization')  // Bearer ACCESSTOKEN
+        const octokit = new Octokit({
+         auth: accessTok
+         })
+    //  console.log(accessTok)
+         const basicUser = await octokit.request('GET /user', {
+             headers: {
+                 'X-GitHub-Api-Version': '2022-11-28'
+               }
+         })
+         const GHuser = await basicUser.data
+         console.log(GHuser)
+
+         await session.withTransaction(async()=>{
+            let LoggedUser = {
+                fullName: `${GHuser?.name} ${ GHuser?.lastName ? GHuser?.lastName : '' }`,
+                picture: GHuser?.avatar_url,
+                email: GHuser?.email,
+                loggedThrough: 'Github'
+
+            }
+            console.log(LoggedUser)
+          
+            const dbUser =  User.find({ email : LoggedUser?.email})
+
+            if(!dbUser) {
+                return res.status(404).send({success:false, message:`NOT_SIGNED_UP`})
+            }
+            console.log(`success`)
+            const GeneratedAccessToken = generateAccessToken(LoggedUser)
+
+        
+            res.status(201).send({success:true,data:{user : {LoggedUser}, token: {GeneratedAccessToken}}});
+           await session.commitTransaction(); 
+            session.endSession()
+        })
+
+    } catch (error) {
+        console.log(error)
+        res.status(500).send({success:false, message:error})       
+    }
+})
 export default router
