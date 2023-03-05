@@ -17,11 +17,14 @@ const Login = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: true
     },
     refreshToken : {
         type: String,
     },
+    loggedThrough: {
+        type:String,
+        required: true
+    }
     
 
 }, {versionKey: false })

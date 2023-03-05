@@ -4,7 +4,8 @@ import  verifyGoogleToken  from '../SocialAuth/googleAuth.js'
 
 import jwt from 'jsonwebtoken'
 import User from '../MongoDb/models/user.js'
-import Token from '../MongoDb/models/token.js'
+// import Token from '../MongoDb/models/token.js'
+import Login from '../MongoDb/models/login.js'
 import { generateAccessToken, generateRefreshToken } from './tokenRoute.js'
 import { conn } from '../MongoDb/connect.js'
 
@@ -23,32 +24,35 @@ router.route('/signin').post(async(req,res)=>{
                 return res.status(400).json({message: verificationResponse.error})
             };
 
-            const profile = await verificationResponse?.payload;
-            // console.log(profile)
+            const profile =  verificationResponse?.payload;
+            console.log(profile)
     
-            const existsInDb = await User.find({email:profile.email})
+            const dbUser = await Login.find({email:profile?.email})
             // console.log(existsInDb)
     
-            if(!existsInDb){
+            if(!dbUser){
                 return res.status(400).json({
                     message: "You are not registered. Please sign up."
                 });
             }
-    
-            res.status(201).send({
-                success:true, data:{
+            let user = {
 
+                fullName: `${profile?.given_name} ${profile?.family_name}`,
+                picture: profile?.picture,
+                email: profile?.email,
+               
+            }
+            if(dbUser[0]?.loggedThrough !== 'Google'){
+                return res.status(400).send({success:false, message: `SIGNED_UP_DIFFERENTLY`, loggedThrough: dbUser[0]?.loggedThrough})
+            }
+        
+
+            res.status(201).send({
+                success:true,
+                 data:{
                     loggedThrough: 'Google',
-                    user: {
-                        firstName: profile?.given_name,
-                        lastName: profile?.family_name,
-                        picture: profile?.picture,
-                        email: profile?.email,
-                        refreshToken: jwt.sign({email: profile?.email}, process.env.JWT_REFRESH_TOKEN_SECRET),
-                        accessToken: jwt.sign({email: profile?.email}, process.env.JWT_TOKEN_SECRET, {
-                            expiresIn: "1d",
-                        }),
-                    },
+                    user: user,
+                    accessToken: generateAccessToken(user)
                 }
             });
         }
@@ -79,6 +83,16 @@ router.route('/register').post(async(req,res)=>{
                     email: profile?.email,
                         
                 }
+            const GeneratedRefreshToken = generateRefreshToken(user)
+
+
+                const loginUser = await Login.create([
+                    {
+                        email: user?.email,
+                        refreshToken: GeneratedRefreshToken,
+                        loggedThrough: 'Google'
+                    }
+                ])
               
                 const dbUser = await User.create([
                     {
@@ -89,25 +103,23 @@ router.route('/register').post(async(req,res)=>{
                     }
                 ]);
                 console.log(`success`)
-            const refreshToken = generateRefreshToken(user)
-    
-            await Token.create([
-                {
-                    refreshToken: refreshToken
+
+                if(loginUser && dbUser){
+                    
+
+                    res.status(201).send({success:true,data:{user, token: GeneratedRefreshToken}});
+                    await session.commitTransaction(); 
+                    session.endSession()
                 }
-            ]);
-                res.status(201).send({success:true,data:{user, refreshToken}});
-               await session.commitTransaction(); 
-                session.endSession()
+    
+       
             })
            
         }
         
     } catch (error) {
         console.log(error)
-        res.status(500).json({
-            message: "An error occured. Registration failed"
-        })
+        res.status(500).send({success:false, message:error})  
     }
 })
 export default router

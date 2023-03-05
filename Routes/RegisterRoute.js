@@ -20,7 +20,7 @@ router.route('/').post(async(req,res)=>{
     try {
         const session = await conn.startSession()
 
-        const {fullName, email, password, picture} = req.body
+        const {fullName, email, password, picture, loggedThrough} = req.body
         const userCredentials = {
             fullName, email, picture
         }
@@ -29,13 +29,16 @@ router.route('/').post(async(req,res)=>{
             return res.status(400).json(`incorrect form submission`)
         } 
         else  if(validatePassword(password,fullName) == Errors.INVALID_PASSWORD){
+            console.log()
             return res.status(400).json(Errors.INVALID_PASSWORD)
         } 
         else if(validatePassword(password, fullName) == Errors.PASSWORD_CONTAINS_NAME){
+            console.log()
             return res.status(400).json(JSON.stringify(Errors.PASSWORD_CONTAINS_NAME))
     
         }
         if(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email) === false) {
+            console.log()
             return res.status(400).json(Errors.INVALID_EMAIL)
         }    
 
@@ -45,26 +48,31 @@ router.route('/').post(async(req,res)=>{
         await session.withTransaction(async()=>{
             const loginUser = await Login.create([{
                 email: email,
-                password: hash
+                password: hash,
+                loggedThrough: loggedThrough
             }], {session})
 
-            const user = await User.create([
+            const USER = await User.create([
                 {
                     email: email,
                     fullName: fullName,
                     picture: picture,
+                    loggedThrough: loggedThrough
+
                 }
             ]);
-            console.log(`success`)
-        const refreshToken = generateRefreshToken(userCredentials)
-        const accessToken = generateAccessToken(userCredentials)
 
-        await Token.create([
-            {
-                refreshToken: refreshToken
+            let user = {
+                email: USER[0]?.email,
+                fullName: USER[0]?.fullName,
+                picture: USER[0]?.picture
             }
-        ]);
-            res.status(201).send({success:true,data:{user, accessToken, refreshToken}});
+            console.log(`success`)
+            const refreshToken = generateRefreshToken(userCredentials)
+            const accessToken = generateAccessToken(userCredentials)
+
+    
+            res.status(201).send({success:true,data:{user, accessToken, refreshToken, loggedThrough: loggedThrough}});
            await session.commitTransaction(); 
             session.endSession()
         })

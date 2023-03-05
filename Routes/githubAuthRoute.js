@@ -4,8 +4,9 @@ import * as dotenv from 'dotenv';
 import {Octokit} from 'octokit'
 import { conn } from '../MongoDb/connect.js';
 import User from '../MongoDb/models/user.js'
+import Login from '../MongoDb/models/login.js'
 import Token from '../MongoDb/models/token.js'
-import { generateAccessToken } from './tokenRoute.js';
+import { generateAccessToken,generateRefreshToken } from './tokenRoute.js';
 
 dotenv.config()
 const router = express.Router()
@@ -52,19 +53,21 @@ router.route("/register").get( async(req,res)=>{
                 loggedThrough: 'Github'
 
             }
+            const GeneratedRefreshToken = generateRefreshToken(user)
+
+            const loginUser = await Login.create([{
+                email: user?.email,
+                refreshToken: GeneratedRefreshToken,
+                loggedThrough: 'Github'
+            }])
           
             const dbUser = await User.create([
                 user
             ]);
             console.log(`success`)
-        const GeneratedRefreshToken = generateRefreshToken(user)
 
-        await Token.create([
-            {
-                refreshToken: refreshToken
-            }
-        ]);
-            res.status(201).send({success:true,data:{user: {user}, token: {GeneratedRefreshToken}}});
+      
+            res.status(201).send({success:true,data:{user: user, token: GeneratedRefreshToken}});
            await session.commitTransaction(); 
             session.endSession()
         })
@@ -91,29 +94,29 @@ router.route("/signin").get( async(req,res)=>{
                }
          })
          const GHuser = await basicUser.data
-         console.log(GHuser)
 
          await session.withTransaction(async()=>{
-            let LoggedUser = {
+            let user = {
                 fullName: `${GHuser?.name} ${ GHuser?.lastName ? GHuser?.lastName : '' }`,
                 picture: GHuser?.avatar_url,
                 email: GHuser?.email,
                 loggedThrough: 'Github'
 
             }
-            console.log(LoggedUser)
           
-            const dbUser =  User.find({ email : LoggedUser?.email})
+            const dbUser = await Login.find({ email : user?.email})
 
-            if(!dbUser) {
+            if(dbUser.length < 1) {
                 return res.status(404).send({success:false, message:`NOT_SIGNED_UP`})
             }
             console.log(`success`)
-            const GeneratedAccessToken = generateAccessToken(LoggedUser)
+            const GeneratedAccessToken = generateAccessToken(user)
 
-        
-            res.status(201).send({success:true,data:{user : {LoggedUser}, token: {GeneratedAccessToken}}});
-           await session.commitTransaction(); 
+            if(dbUser[0]?.loggedThrough !== 'Github'){
+                return res.status(400).send({success:false, message: `SIGNED_UP_DIFFERENTLY`, loggedThrough: dbUser[0]?.loggedThrough})
+            }
+             res.status(201).send({success:true,data:{user : user, token: {GeneratedAccessToken}}});
+            await session.commitTransaction(); 
             session.endSession()
         })
 

@@ -17,8 +17,7 @@ const router = express.Router()
 
 router.route('/').post(async(req,res)=>{
     try {
-        const {email, password, accessToken} = req.body
-        
+        const {email, password, accessToken, loggedThrough} = req.body
         
         if(accessToken){
             return jwt.verify(accessToken, process.env.JWT_TOKEN_SECRET, (err,result) => {
@@ -30,36 +29,40 @@ router.route('/').post(async(req,res)=>{
                 const user = {
                     fullName: result?.fullName || `${result.firstName} ${result.lastName}` ,
                     email: result.email,
-                    picture: result?.picture || null
+                    picture: result?.picture || null,
+                    
                 }
+                
                 console.log(user)
-                return res.status(200).send({success:true, data: user})
+                return res.status(200).send({
+                    success:true,
+                    data: {user, loggedThrough: result?.loggedThrough}
+                })
             })
         }
         if(!email || !password) return res.status(400).send({success:false, message:`INCORRECT_FORM_SUBMISSION`})
 
-        console.log(email)
-        const USER = await User.find({email:email})
-        if(USER == null || undefined || USER.length < 1) res.status(404).send({success:false, message: `NOT_FOUND`})
-        if(USER){
-            const isRegister =  await Login.find({email: email})
-            console.log(USER)
-           if(isRegister.length !== 0) {
-            console.log(isRegister)
+        const USER_LOGIN = await Login.find({email: email})
 
-            let user = {fullName: USER[0].fullName, email: USER[0].email}
-            const GeneratedToken = generateAccessToken(user);
-            return res.status(200).send({success:true, data: {user, GeneratedToken}})
-        } else {
-            console.log(isRegister)
-            return res.status(400).send({success:false, message: `LOGGED_THROUGH_SOCIAL`, social: USER[0]?.loggedThrough})
-           }
-        } else if(!isValid){
-            return res.status(400).send({success:false, message: `WRONG_PASSWORD`})
+        if(USER_LOGIN && USER_LOGIN[0]?.loggedThrough !== 'Internal') {
+            console.log('1')
+            return res.status(400).send({success:false, message: `LOGGED_THROUGH_SOCIAL`, social: USER_LOGIN[0]?.loggedThrough})
+            
         }
+        let USER = await User.find({email: email})
 
+        if(USER && USER.length > 0) {
+        console.log(USER)
 
- 
+            const isValid = bcrypt.compareSync(password, USER_LOGIN[0].password)
+            if(!isValid){
+                return res.status(400).send({success:false, message:'WRONG_PASSWORD'});
+            } 
+            let user = {fullName: USER[0].fullName, email: USER[0].email, picture: USER[0]?.picture}
+            const GeneratedToken = generateAccessToken(user);
+            return res.status(200).send({success:true, data: {user, accessToken: GeneratedToken, loggedThrough: 'Internal'}})
+     
+        }
     } catch (error) {
         console.log(`error: `, error)
         return res.status(500).send({success: false, message: error})
