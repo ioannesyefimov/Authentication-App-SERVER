@@ -54,6 +54,12 @@ router.route("/register").get( async(req,res)=>{
 
             }
             const GeneratedRefreshToken = generateRefreshToken(user)
+            const GeneratedAccessToken = generateAccessToken(user)
+            
+            const isLoggedAlready = await Login.find({email: email})
+            if(isLoggedAlready.length !== 0){
+                return res.status(400).send({success:false, message: `LOGGED_DIFFERENTLY`, SIGNED_UP_WITH: isLoggedAlready[0]?.loggedThrough})
+            }
 
             const loginUser = await Login.create([{
                 email: user?.email,
@@ -67,7 +73,7 @@ router.route("/register").get( async(req,res)=>{
             console.log(`success`)
 
       
-            res.status(201).send({success:true,data:{user: user, token: GeneratedRefreshToken}});
+            res.status(201).send({success:true,data:{accessToken: GeneratedAccessToken, refreshToken: GeneratedRefreshToken}});
            await session.commitTransaction(); 
             session.endSession()
         })

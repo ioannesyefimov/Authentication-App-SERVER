@@ -1,7 +1,7 @@
 import express from 'express'
 import * as dotenv from "dotenv"
 
-import Token from '../MongoDb/models/token.js'
+import Login from '../MongoDb/models/login.js'
 
 export const generateAccessToken = (user) => {
     const accessToken = jwt.sign(user, process.env.JWT_TOKEN_SECRET, {
@@ -24,9 +24,9 @@ router.route('/').post(async(req,res)=>{
     console.log(refreshToken)
     if(refreshToken == null) return res.sendStatus(401)
 
-     const isValidToken = await Token.find({refreshToken: refreshToken});
+     const isValidToken = await Login.find({refreshToken: refreshToken});
      console.log(isValidToken)
-    if(!isValidToken) {
+    if(isValidToken.length < 1) {
         // console.log(isValidToken)
         return res.status(404).send({success:false, message: 'NOT FOUND'})
     }

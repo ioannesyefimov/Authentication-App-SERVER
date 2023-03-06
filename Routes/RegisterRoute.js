@@ -44,6 +44,11 @@ router.route('/').post(async(req,res)=>{
 
         const hash = bcrypt.hashSync(password, 10)
 
+        const isLoggedAlready = await Login.find({email: email})
+        if(isLoggedAlready.length !== 0){
+            return res.status(400).send({success:false, message: `LOGGED_DIFFERENTLY`, SIGNED_UP_WITH: isLoggedAlready[0]?.loggedThrough})
+        }
+
 
         await session.withTransaction(async()=>{
             const loginUser = await Login.create([{
@@ -51,13 +56,16 @@ router.route('/').post(async(req,res)=>{
                 password: hash,
                 loggedThrough: loggedThrough
             }], {session})
+            const refreshToken = generateRefreshToken(user)
+            const accessToken = generateAccessToken(user)
 
             const USER = await User.create([
                 {
                     email: email,
                     fullName: fullName,
                     picture: picture,
-                    loggedThrough: loggedThrough
+                    loggedThrough: loggedThrough,
+                    refreshToken: refreshToken
 
                 }
             ]);
@@ -65,20 +73,21 @@ router.route('/').post(async(req,res)=>{
             let user = {
                 email: USER[0]?.email,
                 fullName: USER[0]?.fullName,
-                picture: USER[0]?.picture
+                picture: USER[0]?.picture,
+                loggedThrough:USER[0]?.loggedThrough
             }
             console.log(`success`)
-            const refreshToken = generateRefreshToken(userCredentials)
-            const accessToken = generateAccessToken(userCredentials)
+       
 
     
-            res.status(201).send({success:true,data:{user, accessToken, refreshToken, loggedThrough: loggedThrough}});
+            res.status(201).send({success:true,data:{accessToken, refreshToken, loggedThrough: loggedThrough}});
            await session.commitTransaction(); 
             session.endSession()
         })
     
     } catch (error) {
         console.log(`error: `, error)
+        
         res.status(500).send({success:false, message: error})
     }
 })

@@ -43,7 +43,7 @@ router.route('/signin').post(async(req,res)=>{
                
             }
             if(dbUser[0]?.loggedThrough !== 'Google'){
-                return res.status(400).send({success:false, message: `SIGNED_UP_DIFFERENTLY`, loggedThrough: dbUser[0]?.loggedThrough})
+                return res.status(400).send({success:false, message: `LOGGED_THROUGH_SOCIAL`, social: dbUser[0]?.loggedThrough})
             }
         
 
@@ -83,8 +83,13 @@ router.route('/register').post(async(req,res)=>{
                     email: profile?.email,
                         
                 }
-            const GeneratedRefreshToken = generateRefreshToken(user)
-
+                
+                const isLoggedAlready = await Login.find({email: user?.email})
+                if(isLoggedAlready.length !== 0){
+                    return res.status(400).send({success:false, message: `LOGGED_DIFFERENTLY`, SIGNED_UP_WITH: isLoggedAlready[0]?.loggedThrough})
+                }
+                const GeneratedRefreshToken = generateRefreshToken(user)
+                const GeneratedAccessToken = generateAccessToken(user)
 
                 const loginUser = await Login.create([
                     {
@@ -107,7 +112,7 @@ router.route('/register').post(async(req,res)=>{
                 if(loginUser && dbUser){
                     
 
-                    res.status(201).send({success:true,data:{user, token: GeneratedRefreshToken}});
+                    res.status(201).send({success:true,data:{user, accessToken:GeneratedAccessToken, refreshToken: GeneratedRefreshToken}});
                     await session.commitTransaction(); 
                     session.endSession()
                 }
