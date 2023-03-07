@@ -28,7 +28,7 @@ router.route('/').post(async(req,res)=>{
      console.log(isValidToken)
     if(isValidToken.length < 1) {
         // console.log(isValidToken)
-        return res.status(404).send({success:false, message: 'NOT FOUND'})
+        return res.status(404).send({success:false, message: Errors.NOT_FOUND})
     }
         console.log(isValidToken)
          jwt.verify(isValidToken[0].refreshToken, process.env.JWT_REFRESH_TOKEN_SECRET, (error, user) => {

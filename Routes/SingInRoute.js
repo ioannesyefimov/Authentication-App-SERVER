@@ -7,8 +7,11 @@ import User from '../MongoDb/models/user.js'
 import Login from '../MongoDb/models/login.js'
 import { generateAccessToken, generateRefreshToken } from './tokenRoute.js'
 
-
+import { handleGoogleSingin } from './googleAuth.js'
+import { handleGithubSingin } from './githubAuthRoute.js'
 import jwt from 'jsonwebtoken'
+import { Errors } from '../utils.js'
+import { handleUserData } from './getUserData.js'
 
 dotenv.config();
  
@@ -18,40 +21,22 @@ const router = express.Router()
 router.route('/').post(async(req,res)=>{
     try {
         const {email, password, accessToken, loggedThrough} = req.body
-        
-        if(accessToken){
-            return jwt.verify(accessToken, process.env.JWT_TOKEN_SECRET, (err,result) => {
-                if(err) {
-                    console.log(err)
-                    return res.status(404).send({success:false, message:err})
-                }
-                console.log(result)
-                const user = {
-                    fullName: result?.fullName || `${result.firstName} ${result.lastName}` ,
-                    email: result.email,
-                    picture: result?.picture || null,
-                    
-                }
-                const isLogged = Login.find({email:user.email })
-
-                if(isLogged.length < 1){
-                    return res.status(404).send({success:false,message:`NOT_FOUND`})
-                }
-                
-                console.log(user)
-                return res.status(200).send({
-                    success:true,
-                    data: {user, loggedThrough: result?.loggedThrough}
-                })
-            })
+        // if(!email ) return res.status(400).send({success:false, message:`INCORRECT_FORM_SUBMISSION`})
+        if(req.body.credential && loggedThrough=='Google'){
+            return handleGoogleSingin(req.body.credential,res)
         }
-        if(!email || !password) return res.status(400).send({success:false, message:`INCORRECT_FORM_SUBMISSION`})
+        if(accessToken && loggedThrough == 'Github'){
+           return handleGithubSingin(accessToken, res)
+        }
+        if(accessToken && loggedThrough === 'Google'){
+            return handleUserData(accessToken,res)
+        }
 
         const USER_LOGIN = await Login.find({email: email})
 
         if( USER_LOGIN[0]?.loggedThrough !== loggedThrough) {
             console.log('1')
-            return res.status(400).send({success:false, message: `LOGGED_DIFFERENTLY`, SIGNED_UP_WITH: USER_LOGIN[0]?.loggedThrough})
+            return res.status(400).send({success:false, message: Errors.SIGNED_UP_WITH , loggedThrough: USER_LOGIN[0]?.loggedThrough})
             
         }
         let USER = await User.find({email: email})
@@ -61,7 +46,7 @@ router.route('/').post(async(req,res)=>{
 
             const isValid = bcrypt.compareSync(password, USER_LOGIN[0].password)
             if(!isValid){
-                return res.status(400).send({success:false, message:'WRONG_PASSWORD'});
+                return res.status(400).send({success:false, message:Errors.WRONG_PASSWORD});
             } 
             let user = {fullName: USER[0].fullName, email: USER[0].email, picture: USER[0]?.picture}
             const GeneratedToken = generateAccessToken(user);

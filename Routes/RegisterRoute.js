@@ -8,7 +8,6 @@ import { validatePassword, Errors } from '../utils.js'
 
 import User from '../MongoDb/models/user.js'
 import Login from '../MongoDb/models/login.js'
-import Token from '../MongoDb/models/token.js'
 import { generateAccessToken, generateRefreshToken } from './tokenRoute.js'
 
 dotenv.config();
@@ -26,27 +25,27 @@ router.route('/').post(async(req,res)=>{
         }
         // validate form submission
         if(!fullName|| !email|| !password) {
-            return res.status(400).json(`incorrect form submission`)
+            return res.status(400).send(`incorrect form submission`)
         } 
         else  if(validatePassword(password,fullName) == Errors.INVALID_PASSWORD){
             console.log()
-            return res.status(400).json(Errors.INVALID_PASSWORD)
+            return res.status(400).send({success:false,message:Errors.INVALID_PASSWORD})
         } 
         else if(validatePassword(password, fullName) == Errors.PASSWORD_CONTAINS_NAME){
             console.log()
-            return res.status(400).json(JSON.stringify(Errors.PASSWORD_CONTAINS_NAME))
+            return res.status(400).send({success:false, message:Errors.PASSWORD_CONTAINS_NAME})
     
         }
         if(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email) === false) {
             console.log()
-            return res.status(400).json(Errors.INVALID_EMAIL)
+            return res.status(400).send({success:false,message:Errors.INVALID_EMAIL})
         }    
 
         const hash = bcrypt.hashSync(password, 10)
 
         const isLoggedAlready = await Login.find({email: email})
         if(isLoggedAlready.length !== 0){
-            return res.status(400).send({success:false, message: `LOGGED_DIFFERENTLY`, SIGNED_UP_WITH: isLoggedAlready[0]?.loggedThrough})
+            return res.status(400).send({success:false, message:   SIGNED_UP_DIFFERENTLY, loggedThrough: isLoggedAlready[0]?.loggedThrough})
         }
 
 
