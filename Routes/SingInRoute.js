@@ -10,9 +10,9 @@ import { generateAccessToken, generateRefreshToken } from './tokenRoute.js'
 import { handleGoogleSingin } from './googleAuth.js'
 import { handleGithubSingin } from './githubAuthRoute.js'
 import jwt from 'jsonwebtoken'
-import { Errors } from '../utils.js'
 import { handleUserData } from './getUserData.js'
 
+import { Errors } from '../utils.js'
 dotenv.config();
  
 
@@ -22,17 +22,21 @@ router.route('/').post(async(req,res)=>{
     try {
         const {email, password, accessToken, loggedThrough} = req.body
         // if(!email ) return res.status(400).send({success:false, message:`INCORRECT_FORM_SUBMISSION`})
-        if(req.body.credential && loggedThrough=='Google'){
-            return handleGoogleSingin(req.body.credential,res)
-        }
+        // if(req.body.credential && loggedThrough=='Google'){
+            // return handleGoogleSingin(req.body.credential,res)
+        // }
         if(accessToken && loggedThrough == 'Github'){
            return handleGithubSingin(accessToken, res)
         }
-        if(accessToken && loggedThrough === 'Google'){
+        if(accessToken && loggedThrough ){
             return handleUserData(accessToken,res)
-        }
+        } 
 
         const USER_LOGIN = await Login.find({email: email})
+
+        if(USER_LOGIN.length < 1){
+            return res.status(404).send({success:false,message:Errors.NOT_FOUND})
+        }
 
         if( USER_LOGIN[0]?.loggedThrough !== loggedThrough) {
             console.log('1')

@@ -88,10 +88,11 @@ router.route('/signin').post(async(req,res)=>{
                 fullName: `${profile?.given_name} ${profile?.family_name}`,
                 picture: profile?.picture,
                 email: profile?.email,
+                loggedThrough:'Google'
                
             }
             if(dbUser[0]?.loggedThrough !== 'Google'){
-                return res.status(400).send({success:false, message: `LOGGED_THROUGH_SOCIAL`, social: dbUser[0]?.loggedThrough})
+                return res.status(400).send({success:false, message: Errors.SIGNED_UP_DIFFERENTLY, loggedThrough: dbUser[0]?.loggedThrough})
             }
         
 
@@ -99,7 +100,7 @@ router.route('/signin').post(async(req,res)=>{
                 success:true,
                  data:{
                     loggedThrough: 'Google',
-                    user: user,
+                    // user: user,
                     accessToken: generateAccessToken(user)
                 }
             });

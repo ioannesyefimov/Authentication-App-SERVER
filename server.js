@@ -29,10 +29,9 @@ app.use("/api/auth/token", TokenRoute)
 const PORT = process.env.PORT || 5050
 
 const StartServer = async ()=>{
-    console.log(process.env.MONGODB_URL)
     try {
         connectDB(process.env.MONGODB_URL);
-        app.listen(PORT, () => console.log(`Server is running on ${PORT} `))
+        app.listen(PORT, () => console.log(`Server is running on port ${PORT} `))
 
     } catch (error) {
         console.log(error)

@@ -45,36 +45,38 @@ router.route('/').post(async(req,res)=>{
 
         const isLoggedAlready = await Login.find({email: email})
         if(isLoggedAlready.length !== 0){
-            return res.status(400).send({success:false, message:   SIGNED_UP_DIFFERENTLY, loggedThrough: isLoggedAlready[0]?.loggedThrough})
+            return res.status(400).send({success:false, message: Errors.SIGNED_UP_DIFFERENTLY, loggedThrough: isLoggedAlready[0]?.loggedThrough})
         }
 
 
         await session.withTransaction(async()=>{
-            const loginUser = await Login.create([{
+            let user = {
                 email: email,
-                password: hash,
-                loggedThrough: loggedThrough
-            }], {session})
+                fullName: fullName,
+                picture: picture,
+                loggedThrough:loggedThrough
+            }
             const refreshToken = generateRefreshToken(user)
             const accessToken = generateAccessToken(user)
 
+            const loginUser = await Login.create([{
+                email: email,
+                password: hash,
+                loggedThrough: loggedThrough,
+                refreshToken: refreshToken
+
+            }], {session})
             const USER = await User.create([
                 {
                     email: email,
                     fullName: fullName,
-                    picture: picture,
+                    picture: picture || null,
                     loggedThrough: loggedThrough,
-                    refreshToken: refreshToken
-
+                    
                 }
-            ]);
-
-            let user = {
-                email: USER[0]?.email,
-                fullName: USER[0]?.fullName,
-                picture: USER[0]?.picture,
-                loggedThrough:USER[0]?.loggedThrough
-            }
+            ], {session});
+            
+            
             console.log(`success`)
        
 
