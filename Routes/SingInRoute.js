@@ -21,16 +21,15 @@ const router = express.Router()
 router.route('/').post(async(req,res)=>{
     try {
         const {email, password, accessToken, loggedThrough} = req.body
-        // if(!email ) return res.status(400).send({success:false, message:`INCORRECT_FORM_SUBMISSION`})
-        // if(req.body.credential && loggedThrough=='Google'){
-            // return handleGoogleSingin(req.body.credential,res)
-        // }
+
         if(accessToken && loggedThrough == 'Github'){
            return handleGithubSingin(accessToken, res)
         }
         if(accessToken && loggedThrough ){
             return handleUserData(accessToken,res)
         } 
+        // }
+        if(!email || !password) return res.status(400).send({success:false, message:`INCORRECT_FORM_SUBMISSION`})
 
         const USER_LOGIN = await Login.find({email: email})
 
@@ -54,7 +53,7 @@ router.route('/').post(async(req,res)=>{
             } 
             let user = {fullName: USER[0].fullName, email: USER[0].email, picture: USER[0]?.picture}
             const GeneratedToken = generateAccessToken(user);
-            return res.status(200).send({success:true, data: {user, accessToken: GeneratedToken, loggedThrough: USER[0].loggedThrough}})
+            return res.status(200).send({success:true, data: { accessToken: GeneratedToken, loggedThrough: USER[0].loggedThrough}})
      
         }
     } catch (error) {

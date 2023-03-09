@@ -7,6 +7,7 @@ import User from '../MongoDb/models/user.js'
 import Login from '../MongoDb/models/login.js'
 import { generateAccessToken,generateRefreshToken } from './tokenRoute.js';
 import jwt from 'jsonwebtoken'
+import { Errors } from "../utils.js"
 
 dotenv.config()
 const router = express.Router()
@@ -14,7 +15,6 @@ const router = express.Router()
 
 export const handleGithubSingin = async(accessToken ,res)=>{
     try {
-        console.log(accessToken)
         
         jwt.verify(accessToken, process.env.JWT_TOKEN_SECRET, async (err,result) => {
             if(err) {
@@ -28,7 +28,14 @@ export const handleGithubSingin = async(accessToken ,res)=>{
                 email: result.email,
                 picture: result?.picture || null,
                 loggedThrough: result?.loggedThrough
-                
+            }
+            const GeneratedRefreshToken = generateRefreshToken(user)
+            const GeneratedAccessToken = generateAccessToken(user)
+            
+            const isLoggedAlready = await Login.find({email: user?.email})
+            if(isLoggedAlready.length !== 0){
+                console.log(Errors);
+                return res.status(400).send({success:false, message: Errors.SIGNED_UP_DIFFERENTLY, loggedThrough: isLoggedAlready[0]?.loggedThrough})
             }
 
             await session.withTransaction(async()=>{
@@ -46,7 +53,9 @@ export const handleGithubSingin = async(accessToken ,res)=>{
                await session.commitTransaction(); 
                 session.endSession()
             })
+        
         })
+        
     } catch (error) {
         console.log(error)
         res.status(500).send({success:false, message:error})       
