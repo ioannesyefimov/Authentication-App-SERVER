@@ -19,32 +19,32 @@ router.route('/').post(async(req,res)=>{
     try {
         const {email, password, accessToken, loggedThrough} = req.body
         
-        if(accessToken){
-            return jwt.verify(accessToken, process.env.JWT_TOKEN_SECRET, (err,result) => {
-                if(err) {
-                    console.log(err)
-                    return res.status(404).send({success:false, message:err})
-                }
-                console.log(result)
-                const user = {
-                    fullName: result?.fullName || `${result.firstName} ${result.lastName}` ,
-                    email: result.email,
-                    picture: result?.picture || null,
+        // if(accessToken){
+        //     return jwt.verify(accessToken, process.env.JWT_TOKEN_SECRET, (err,result) => {
+        //         if(err) {
+        //             console.log(err)
+        //             return res.status(404).send({success:false, message:err})
+        //         }
+        //         console.log(result)
+        //         const user = {
+        //             fullName: result?.fullName || `${result.firstName} ${result.lastName}` ,
+        //             email: result.email,
+        //             picture: result?.picture || null,
                     
-                }
-                const isLogged = Login.find({email:user.email })
+        //         }
+        //         const isLogged = Login.find({email:user.email })
 
-                if(isLogged.length < 1){
-                    return res.status(404).send({success:false,message:`NOT_FOUND`})
-                }
+        //         if(isLogged.length < 1){
+        //             return res.status(404).send({success:false,message:`NOT_FOUND`})
+        //         }
                 
-                console.log(user)
-                return res.status(200).send({
-                    success:true,
-                    data: {user, loggedThrough: result?.loggedThrough}
-                })
-            })
-        }
+        //         console.log(user)
+        //         return res.status(200).send({
+        //             success:true,
+        //             data: {user, loggedThrough: result?.loggedThrough}
+        //         })
+        //     })
+        // }
         if(!email || !password) return res.status(400).send({success:false, message:`INCORRECT_FORM_SUBMISSION`})
 
         const USER_LOGIN = await Login.find({email: email})
@@ -65,7 +65,7 @@ router.route('/').post(async(req,res)=>{
             } 
             let user = {fullName: USER[0].fullName, email: USER[0].email, picture: USER[0]?.picture}
             const GeneratedToken = generateAccessToken(user);
-            return res.status(200).send({success:true, data: {user, accessToken: GeneratedToken, loggedThrough: USER[0].loggedThrough}})
+            return res.status(200).send({success:true, data: { accessToken: GeneratedToken, loggedThrough: USER[0].loggedThrough}})
      
         }
     } catch (error) {

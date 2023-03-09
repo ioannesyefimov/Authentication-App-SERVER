@@ -7,6 +7,7 @@ import User from '../MongoDb/models/user.js'
 import Login from '../MongoDb/models/login.js'
 import Token from '../MongoDb/models/token.js'
 import { generateAccessToken,generateRefreshToken } from './tokenRoute.js';
+import { Errors } from "../utils.js"
 
 dotenv.config()
 const router = express.Router()
@@ -56,9 +57,10 @@ router.route("/register").get( async(req,res)=>{
             const GeneratedRefreshToken = generateRefreshToken(user)
             const GeneratedAccessToken = generateAccessToken(user)
             
-            const isLoggedAlready = await Login.find({email: email})
+            const isLoggedAlready = await Login.find({email: user?.email})
             if(isLoggedAlready.length !== 0){
-                return res.status(400).send({success:false, message: `LOGGED_DIFFERENTLY`, SIGNED_UP_WITH: isLoggedAlready[0]?.loggedThrough})
+                console.log(Errors);
+                return res.status(400).send({success:false, message: Errors.SIGNED_UP_DIFFERENTLY, loggedThrough: isLoggedAlready[0]?.loggedThrough})
             }
 
             const loginUser = await Login.create([{

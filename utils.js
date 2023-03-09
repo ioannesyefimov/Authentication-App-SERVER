@@ -50,14 +50,19 @@ export function validatePassword(password, name){
     }
 }
 
-export  const Errors = {
-    INVALID_PASSWORD: `Password must be in English and contains at least one uppercase and lowercase character, one number, and one special character`,
-    PASSWORD_CONTAINS_NAME: `PASSWORD_MUST_NOT_CONTAIN_USER'S_INPUT`,
-    USER_EXIST: 'USER_ALREADY_EXISTS',
-    EMAIL_EXIST: 'EMAIL_ALREADY_EXISTS',
-    NOT_FOUND: 'NOT_FOUND',
-    WRONG_PASSWORD: `WRONG_PASSWORD`,
-    INVALID_EMAIL: `INVALID_EMAIL`,
-    WRONG_EMAIL: `WRONG_EMAIL`
-    
+export const Errors = {
+  INVALID_PASSWORD: `Password must be in English and contains at least one uppercase and lowercase character, one number, and one special character`,
+  PASSWORD_CONTAINS_NAME: `PASSWORD_MUST_NOT_CONTAIN_USER'S_INPUT`,
+  USER_EXIST: 'USER_ALREADY_EXISTS',
+  EMAIL_EXIST: 'EMAIL_ALREADY_EXISTS',
+  NOT_FOUND: 'NOT_FOUND',
+  WRONG_PASSWORD: `WRONG_PASSWORD`,
+  INVALID_EMAIL: `INVALID_EMAIL`,
+  WRONG_EMAIL: `WRONG_EMAIL`,
+  CANNOT_CONTAIN_NUMBERS: `CANNOT_CONTAIN_NUMBERS`,
+  LOGGED_THROUGH_SOCIAL: "LOGGED_THROUGH_SOCIAL",
+  CANNOT_BE_EMPTY: `CANNOT_BE_EMPTY`,
+  NOT_SIGNED_UP: `NOT_SIGNED_UP`,
+  SIGNED_UP_DIFFERENTLY: `SIGNED_UP_DIFFERENTLY`
+  
 }
