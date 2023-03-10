@@ -4,7 +4,8 @@ import RegisterRoute from './RegisterRoute.js'
 import TokenRoute from './tokenRoute.js'
 import GitHubRoute from './githubAuthRoute.js'
 import UserDataRoute from './getUserData.js'
-
+import uploadRoute from './uploadRoute/uploadRoute.js'
+import changeProfileRoute from './changeProfile/changeProfile.js'
 export {
- SignInRoute, GoogleRoute,GitHubRoute,UserDataRoute ,TokenRoute, RegisterRoute
+ SignInRoute,changeProfileRoute, GoogleRoute,GitHubRoute,UserDataRoute ,TokenRoute, RegisterRoute,uploadRoute
 }

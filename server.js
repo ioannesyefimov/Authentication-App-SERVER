@@ -2,9 +2,10 @@ import express from 'express'
 import * as dotenv from 'dotenv'
 import cors from 'cors'
 import bodyParser from 'body-parser'
+import axios from 'axios'
 dotenv.config()
 
-import {  GoogleRoute, GitHubRoute, UserDataRoute, RegisterRoute, SignInRoute, TokenRoute} from './Routes/index.js'
+import { uploadRoute, GoogleRoute, GitHubRoute, UserDataRoute, RegisterRoute, SignInRoute, TokenRoute, changeProfileRoute} from './Routes/index.js'
 import connectDB from './MongoDb/connect.js'
 const app = express();
 
@@ -17,6 +18,8 @@ app.use(express.json({limit: '50mb'}));
 app.use(express.json())
 
 
+  
+
 app.use('/api/auth/register', RegisterRoute)
 app.use('/api/auth/signin', SignInRoute)
 
@@ -25,6 +28,8 @@ app.use('/api/auth/google', GoogleRoute)
 app.use('/api/auth/user', UserDataRoute)
 
 app.use("/api/auth/token", TokenRoute)
+app.use("/api/upload", uploadRoute)
+app.use('/api/change', changeProfileRoute)
 
 const PORT = process.env.PORT || 5050
 
