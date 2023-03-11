@@ -29,6 +29,9 @@ export const handleUserData = async(accessToken,res) => {
                     fullName: result?.fullName || `${result.firstName} ${result.lastName}` ,
                     email: result.email,
                     picture: result?.picture || null,
+                    bio: result?.bio || null,
+                    phone: result?.phone || null,
+                   
                     // loggedThrough: result?.loggedThrough
                     
                 }
@@ -65,6 +68,8 @@ router.route('/').post(async(req,res)=>{
                     fullName: result?.fullName || `${result.firstName} ${result.lastName}` ,
                     email: result.email,
                     picture: result?.picture || null,
+                    bio: result?.bio || null,
+                    phone: result?.phone || null,
                     loggedThrough: result?.loggedThrough
                     
                 }

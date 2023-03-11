@@ -1,26 +1,28 @@
-import axios from 'axios'
 import cloudinary from 'cloudinary'
 
 
-function fileUploadMiddleware(req,res){
-    cloudinary.uploader.upload_stream((result)=>{
-        console.log(`${req.headers.origin}/api/change/picture`)
-        axios({
-            url:`${req.headers.origin}/api/change/picture`,
-            method: "post",
-            data: {
-                url: result.secure_url,
-                profileName: req.body.proifleName,
-                
-            },
-        }).then(response=>{
-            res.status(200).send({success:true,data:response.data.data})
-        })
-        .catch(err=>{
-            res.status(500).sed({success:false,message:err})
-        })
-    })
+const opts = {
+    overwrite:true,
+    invalidate: true,
+    resource_type: "auto",
+}
+const  uploadImageFunc = (image) => { //image => base64
+    console.log('uploading image')
+    return new Promise((resolve, reject) => {
+        cloudinary.uploader.upload(image,opts).then(result=>{
+            console.log(result)
+            if(result.secure_url){
+                console.log(result.secure_url);
+                return resolve({success:true,data:{url: result.secure_url}})
+            }
 
+        })
+        .catch(error=>{
+            console.log(error.mesage);
+            return reject({sucess:false, message:error.message})
+        })
+        })
 }
 
-export default fileUploadMiddleware
+
+export default  uploadImageFunc

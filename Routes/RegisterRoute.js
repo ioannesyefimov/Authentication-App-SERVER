@@ -54,7 +54,9 @@ router.route('/').post(async(req,res)=>{
                 email: email,
                 fullName: fullName,
                 picture: picture,
-                loggedThrough:loggedThrough
+                loggedThrough:loggedThrough,
+                bio: null,
+                phone: null,
             }
             const refreshToken = generateRefreshToken(user)
             const accessToken = generateAccessToken(user)
@@ -72,6 +74,8 @@ router.route('/').post(async(req,res)=>{
                     fullName: fullName,
                     picture: picture || null,
                     loggedThrough: loggedThrough,
+                    bio: null,
+                    phone: null,
                     
                 }
             ], {session});

@@ -39,6 +39,9 @@ export const handleGoogleSingin = async(credentials, res) =>{
                 fullName: `${profile?.given_name} ${profile?.family_name}`,
                 picture: profile?.picture,
                 email: profile?.email,
+                bio: profile?.bio,
+                phone: profile?.phone,
+                loggedThrough: 'Google'
                
             }
             if(dbUser[0]?.loggedThrough !== 'Google'){
@@ -88,7 +91,9 @@ router.route('/signin').post(async(req,res)=>{
                 fullName: `${profile?.given_name} ${profile?.family_name}`,
                 picture: profile?.picture,
                 email: profile?.email,
-                loggedThrough:'Google'
+                bio: profile?.bio,
+                phone: profile?.phone,
+                loggedThrough: 'Google'
                
             }
             if(dbUser[0]?.loggedThrough !== 'Google'){
@@ -127,10 +132,14 @@ router.route('/register').post(async(req,res)=>{
     
             await session.withTransaction(async()=>{
                 let user = {
+
                     fullName: `${profile?.given_name} ${profile?.family_name}`,
                     picture: profile?.picture,
                     email: profile?.email,
-                        
+                    bio: profile?.bio,
+                    phone: profile?.phone,
+                    loggedThrough: 'Google'
+                   
                 }
                 
                 const isLoggedAlready = await Login.find({email: user?.email})
@@ -156,6 +165,8 @@ router.route('/register').post(async(req,res)=>{
                         email: user?.email,
                         fullName: user?.fullName,
                         picture: user?.picture,
+                        bio: user?.bio,
+                        phone: user?.phone,
                         loggedThrough: 'Google'
                     }
                 ]);

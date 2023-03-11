@@ -27,7 +27,10 @@ export const handleGithubSingin = async(accessToken ,res)=>{
                 fullName: result?.fullName  ,
                 email: result.email,
                 picture: result?.picture || null,
-                loggedThrough: result?.loggedThrough
+                loggedThrough: result?.loggedThrough,
+                bio: result?.bio,
+                phone: result?.phone,
+               
             }
             const GeneratedRefreshToken = generateRefreshToken(user)
             const GeneratedAccessToken = generateAccessToken(user)
@@ -83,7 +86,10 @@ router.route('/register').post(async(req,res) =>{
                 fullName: `${GHuser?.name} ${ GHuser?.lastName ? GHuser?.lastName : '' }`,
                 picture: GHuser?.avatar_url,
                 email: GHuser?.email,
-                loggedThrough: 'Github'
+                loggedThrough: 'Github',
+                bio: GHuser?.bio,
+                phone: GHuser?.phone,
+               
 
             }
           
@@ -104,6 +110,9 @@ router.route('/register').post(async(req,res) =>{
                 fullName: `${GHuser?.name} ${ GHuser?.lastName ? GHuser?.lastName : '' }`,
                 picture: GHuser?.avatar_url,
                 email: GHuser?.email,
+                bio: GHuser?.bio,
+                phone: GHuser?.phone,
+                
             }]);
 
             console.log(`success`)
@@ -174,7 +183,9 @@ router.route('/getUserToken').get(async(req,res)=>{
                 fullName: `${GHuser?.name} ${ GHuser?.lastName ? GHuser?.lastName : '' }`,
                 picture: GHuser?.avatar_url,
                 email: GHuser?.email,
-                loggedThrough: 'Github'
+                loggedThrough: 'Github',
+                bio: GHuser?.bio,
+                phone: GHuser?.phone,
             }
 
             const isRegistered = await Login.find({email: user.email})

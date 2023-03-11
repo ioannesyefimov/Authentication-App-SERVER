@@ -5,6 +5,14 @@ let validateEmail = function(email) {
        return regex.test(email)
 };
 
+let validateNumber = function(number){
+    if(number === null) return true
+    if(number.length < 5) return false
+    const reg = /\D/
+    return !reg.test(number)
+
+}
+
 const User = new mongoose.Schema({
     fullName: {type: String, required:true},
     email: {
@@ -20,6 +28,8 @@ const User = new mongoose.Schema({
     },
     loggedThrough: {type:String, required:true},
     picture: {type: String},
+    bio: {type:String},
+    phone: {type:String, validate: [validateNumber, `Please type in valid number`]}
      
 }, {versionKey: false })
 

@@ -1,7 +1,6 @@
-import multer from 'multer'
 import cloudinary from 'cloudinary'
 import express from 'express'
-import fileUploadMiddleware from './fileUploadMiddleware.js'
+import uploadImageFunc from './fileUploadMiddleware.js'
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_NAME,
@@ -10,10 +9,25 @@ cloudinary.config({
 })
 const router = express.Router()
 
-const storage = multer.memoryStorage();
-const upload = multer({storage})
-// router.route('/').post(upload.single('file'), fileUploadMiddleware);
 
-router.route('/files').post(upload.single('file'), fileUploadMiddleware)
+router.route('/picture').post(async(req,res)=>{
 
+   const uploadImage = await uploadImageFunc(req.body.image)
+   if(!uploadImage.success){
+    console.log(uploadImage)
+    return res.status(500).send({success:false,message:uploadImage.message})
+   }
+
+   return res.status(200).send({success:true, data:{url: uploadImage.data?.url}})
+//    if(uplaodImage)
+//     .then(url=>{
+//         console.log(url)
+//         return res.status(200).send({sucess:true,data:url})
+//     })
+//     .catch(err=>{
+//         console.log(err)
+
+//        return  res.status(500).send({sucess:false,message:err})
+//     })
+})
 export default router

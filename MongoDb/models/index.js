@@ -1,7 +1,7 @@
 import mongoose from "mongoose"
+import Login from './login.js'
+import User from './user.js'
 
-// const User = mongoose.model('User')
-// const Login = mongoose.model('Login')
-// export {
-    // Login, User
-// }
+export {
+    Login, User
+}

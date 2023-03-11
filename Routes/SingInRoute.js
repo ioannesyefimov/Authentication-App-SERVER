@@ -25,7 +25,7 @@ router.route('/').post(async(req,res)=>{
         if(accessToken && loggedThrough == 'Github'){
            return handleGithubSingin(accessToken, res)
         }
-        if(accessToken && loggedThrough ){
+        if(accessToken  ){
             return handleUserData(accessToken,res)
         } 
         // }
@@ -51,7 +51,13 @@ router.route('/').post(async(req,res)=>{
             if(!isValid){
                 return res.status(400).send({success:false, message:Errors.WRONG_PASSWORD});
             } 
-            let user = {fullName: USER[0].fullName, email: USER[0].email, picture: USER[0]?.picture}
+            let user = {
+                fullName: USER[0].fullName,
+                 email: USER[0].email,
+                  picture: USER[0]?.picture,
+                    bio: USER[0]?.bio,
+                  phone: USER[0]?.phone,
+                }
             const GeneratedToken = generateAccessToken(user);
             return res.status(200).send({success:true, data: { accessToken: GeneratedToken, loggedThrough: USER[0].loggedThrough}})
      
