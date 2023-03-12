@@ -40,12 +40,16 @@ export function validatePassword(password, name){
       const hasNamePatternInPassword = kmpSearch(name, password)
 
       const isInValidPassword = password_rgx.test(password)
+      console.log(password);
+      console.log(isInValidPassword);
     
     if((hasNamePatternInPassword != -1) ){
         return Errors.PASSWORD_CONTAINS_NAME
-    } else if(isInValidPassword === true) {
+    } else if(isInValidPassword == true) {
+      console.log(`invalid in checker`);
         return Errors.INVALID_PASSWORD
     } else {
+      console.log(`valid checker`);
       return `valid`
     }
 }

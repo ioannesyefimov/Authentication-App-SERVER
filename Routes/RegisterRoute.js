@@ -15,6 +15,29 @@ dotenv.config();
 
 const router = express.Router()
 
+export const  serverValidatePw = ( fullName,email,password,res) =>{
+    if(!fullName|| !email|| !password) {
+        return   res.status(400).send(`incorrect form submission`)
+    } 
+    if(validatePassword(password, fullName) === `valid`){
+        console.log(`valid server checkr`);
+        return `valid`
+    }else 
+       
+     if(validatePassword(password,fullName) == Errors.INVALID_PASSWORD){
+        return   res.status(400).send({success:false,message:Errors.INVALID_PASSWORD})
+    } 
+    else if(validatePassword(password, fullName) == Errors.PASSWORD_CONTAINS_NAME){
+        console.log()
+        return   res.status(400).send({success:false, message:Errors.PASSWORD_CONTAINS_NAME})
+
+    }
+    if(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email) === false) {
+        console.log()
+        return   res.status(400).send({success:false,message:Errors.INVALID_EMAIL})
+    }    
+}
+
 router.route('/').post(async(req,res)=>{
     try {
         const session = await conn.startSession()

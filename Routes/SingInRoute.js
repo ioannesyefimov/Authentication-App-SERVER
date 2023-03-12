@@ -37,29 +37,30 @@ router.route('/').post(async(req,res)=>{
             return res.status(404).send({success:false,message:Errors.NOT_FOUND})
         }
 
-        if( USER_LOGIN[0]?.loggedThrough !== loggedThrough) {
+        if( USER_LOGIN[0]?.loggedThrough !== loggedThrough && !USER_LOGIN[0]?.password ) {
             console.log('1')
-            return res.status(400).send({success:false, message: Errors.SIGNED_UP_WITH , loggedThrough: USER_LOGIN[0]?.loggedThrough})
+            return res.status(400).send({success:false, message: Errors.SIGNED_UP_DIFFERENTLY , loggedThrough: USER_LOGIN[0]?.loggedThrough})
             
         }
-        let USER = await User.find({email: email})
-
-        if(USER.length > 0 && USER[0].loggedThrough === 'Internal') {
-        console.log(USER)
-
+        
+        if(USER_LOGIN.length > 0 && USER_LOGIN[0]?.password) {
+            console.log(USER_LOGIN)
+            
             const isValid = bcrypt.compareSync(password, USER_LOGIN[0].password)
             if(!isValid){
                 return res.status(400).send({success:false, message:Errors.WRONG_PASSWORD});
             } 
+            let USER = await User.find({email: email})
             let user = {
                 fullName: USER[0].fullName,
                  email: USER[0].email,
                   picture: USER[0]?.picture,
                     bio: USER[0]?.bio,
                   phone: USER[0]?.phone,
+                  loggedThrough: USER[0]?.loggedThrough
                 }
             const GeneratedToken = generateAccessToken(user);
-            return res.status(200).send({success:true, data: { accessToken: GeneratedToken, loggedThrough: USER[0].loggedThrough}})
+            return res.status(200).send({success:true, data: { accessToken: GeneratedToken, loggedThrough: `Internal`}})
      
         }
     } catch (error) {
