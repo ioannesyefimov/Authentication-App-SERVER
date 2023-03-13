@@ -1,4 +1,4 @@
-
+import jwt from 'jsonwebtoken'
 export function validatePassword(password, name){
     // check whether password doesn't contains at least 
     // 1 uppercase, 1 lowercase, 1 number, and 1 special character. 
@@ -69,5 +69,16 @@ export const Errors = {
   NOT_SIGNED_UP: `NOT_SIGNED_UP`,
   SIGNED_UP_DIFFERENTLY: `SIGNED_UP_DIFFERENTLY`,
   ALREADY_EXISTS: `ALREADY_EXISTS`
+  
+}
+
+export const verifyAccessToken =  (token)=>{
+  return  jwt.verify(token, process.env.JWT_TOKEN_SECRET, async(err,result)=>{
+    if(err) {
+        console.log(err)
+        return err
+    }
+   return result
+})
   
 }

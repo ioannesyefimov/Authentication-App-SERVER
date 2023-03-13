@@ -70,33 +70,34 @@ router.route('/signin').post(async(req,res)=>{
         if(req.body.credential) {
             // console.log(req.body.credential)
             const verificationResponse = await verifyGoogleToken(req.body.credential)
-            console.log(verificationResponse)
             if(verificationResponse.error) {
                 return res.status(400).json({message: verificationResponse.error})
             };
 
-            const profile =  verificationResponse?.payload;
-            console.log(profile)
+            const profile = await verificationResponse?.payload;
+            console.log(profile.email)
     
-            const dbUser = await Login.find({email:profile?.email})
+            const dbUser = await User.find({email:profile?.email})
             // console.log(existsInDb)
     
-            if(!dbUser){
+            if(dbUser.length < 1){
                 return res.status(400).json({
                     message: "You are not registered. Please sign up."
                 });
             }
             let user = {
 
-                fullName: `${profile?.given_name} ${profile?.family_name}`,
-                picture: profile?.picture,
-                email: profile?.email,
-                bio: profile?.bio,
-                phone: profile?.phone,
+                fullName: dbUser[0]?.fullName,
+                picture: dbUser[0]?.picture,
+                email: dbUser[0]?.email,
+                bio: dbUser[0]?.bio,
+                phone: dbUser[0]?.phone,
                 loggedThrough: 'Google'
                
             }
-            if(dbUser[0]?.loggedThrough !== 'Google'){
+            console.log(dbUser[0]);
+            console.log(req.body.loggedThrough);
+            if(dbUser[0]?.loggedThrough !== req.body.loggedThrough){
                 return res.status(400).send({success:false, message: Errors.SIGNED_UP_DIFFERENTLY, loggedThrough: dbUser[0]?.loggedThrough})
             }
         

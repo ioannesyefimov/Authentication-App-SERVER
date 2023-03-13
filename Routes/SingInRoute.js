@@ -36,7 +36,7 @@ router.route('/').post(async(req,res)=>{
         if(USER_LOGIN.length < 1){
             return res.status(404).send({success:false,message:Errors.NOT_FOUND})
         }
-
+    console.log(`LoggedThrough: ${loggedThrough}`);
         if( USER_LOGIN[0]?.loggedThrough !== loggedThrough && !USER_LOGIN[0]?.password ) {
             console.log('1')
             return res.status(400).send({success:false, message: Errors.SIGNED_UP_DIFFERENTLY , loggedThrough: USER_LOGIN[0]?.loggedThrough})

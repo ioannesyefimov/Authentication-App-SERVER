@@ -1,11 +1,15 @@
 import express from 'express'
 import * as dotenv from 'dotenv'
 import cors from 'cors'
+import {Login,User} from './MongoDb/models/index.js'
 dotenv.config()
 
 import { uploadRoute, GoogleRoute, GitHubRoute, UserDataRoute, RegisterRoute, SignInRoute, TokenRoute, changeProfileRoute} from './Routes/index.js'
 import connectDB from './MongoDb/connect.js'
 const app = express();
+
+Login.watch().on('change', data=>console.log(data))
+User.watch().on('change', data=>console.log(data))
 
 app.use(
     cors()
