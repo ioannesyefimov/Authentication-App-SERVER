@@ -8,8 +8,8 @@ let validateEmail = function(email) {
 let validateNumber = function(number){
     if(number === null) return true
     if(number.length < 5) return false
-    const reg = /\D/
-    return !reg.test(number)
+    const reg = /^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/
+    return reg.test(number)
 
 }
 

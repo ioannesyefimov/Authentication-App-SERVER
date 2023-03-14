@@ -21,7 +21,7 @@ export const  serverValidatePw = ( fullName,email,password,res) =>{
     } 
     if(validatePassword(password, fullName) === `valid`){
         console.log(`valid server checkr`);
-        return `valid`
+        return {success:true,message:`valid`}
     }else 
        
      if(validatePassword(password,fullName) == Errors.INVALID_PASSWORD){
@@ -47,22 +47,25 @@ router.route('/').post(async(req,res)=>{
             fullName, email, picture
         }
         // validate form submission
-        if(!fullName|| !email|| !password) {
-            return res.status(400).send(`incorrect form submission`)
-        } 
-        else  if(validatePassword(password,fullName) == Errors.INVALID_PASSWORD){
-            console.log()
-            return res.status(400).send({success:false,message:Errors.INVALID_PASSWORD})
-        } 
-        else if(validatePassword(password, fullName) == Errors.PASSWORD_CONTAINS_NAME){
-            console.log()
-            return res.status(400).send({success:false, message:Errors.PASSWORD_CONTAINS_NAME})
+
+        const isValid = serverValidatePw(fullName, email,password,res)
+        // if(!isValid?.success) return
+        // if(!fullName|| !email|| !password) {
+        //     return res.status(400).send(`incorrect form submission`)
+        // } 
+        // else  if(validatePassword(password,fullName) == Errors.INVALID_PASSWORD){
+        //     console.log()
+        //     return res.status(400).send({success:false,message:Errors.INVALID_PASSWORD})
+        // } 
+        // else if(validatePassword(password, fullName) == Errors.PASSWORD_CONTAINS_NAME){
+        //     console.log()
+        //     return res.status(400).send({success:false, message:Errors.PASSWORD_CONTAINS_NAME})
     
-        }
-        if(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email) === false) {
-            console.log()
-            return res.status(400).send({success:false,message:Errors.INVALID_EMAIL})
-        }    
+        // }
+        // if(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email) === false) {
+        //     console.log()
+        //     return res.status(400).send({success:false,message:Errors.INVALID_EMAIL})
+        // }    
 
         const hash = bcrypt.hashSync(password, 10)
 

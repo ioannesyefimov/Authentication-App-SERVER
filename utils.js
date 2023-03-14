@@ -76,9 +76,43 @@ export const verifyAccessToken =  (token)=>{
   return  jwt.verify(token, process.env.JWT_TOKEN_SECRET, async(err,result)=>{
     if(err) {
         console.log(err)
-        return err
+        return {err}
     }
    return result
 })
   
+}
+
+export const handleChangeProfile = async(req,res)=>{
+  try {
+    const session = await conn.startSession()
+    const {email, updatedParam, accessToken} = req.body
+    const isLogged = await Login.find({email:email})
+    if(isLogged.length < 1) {
+        console.log(Errors.NOT_FOUND);
+        return res.status(404).send({success:false, message:Errors.NOT_FOUND})
+    }
+    
+    const isValidToken = await verifyAccessToken(accessToken)
+
+    if(isValidToken?.err) return res.status(400).send({success:false,message:isValidToken?.err})
+
+    return await session.withTransaction(async()=>{
+
+        const USER = await User.updateOne({email:email}, {email: updatedParam}, {upsert:true}, {session})
+        const LOGIN = await Login.updateOne({email:email}, {email: updatedParam}, {upsert:true}, {session})
+        // console.log(USER)
+
+        if(USER?.modifiedCount == 0 && LOGIN?.modifiedCount == 0 ){
+            return res.status(400).send({success:false,message:`Email IS THE SAME`})
+        }
+
+         res.status(200).send({success:true,data:{message:`Email HAS BEEN CHANGED TO ${updatedParam}`, email: updatedParam}})
+        await session.commitTransaction(); 
+        session.endSession()
+    })
+} catch (error) {
+    return res.status(500).send({success:false,message:error})
+
+}
 }
