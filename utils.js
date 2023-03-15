@@ -68,11 +68,14 @@ export const Errors = {
   CANNOT_BE_EMPTY: `CANNOT_BE_EMPTY`,
   NOT_SIGNED_UP: `NOT_SIGNED_UP`,
   SIGNED_UP_DIFFERENTLY: `SIGNED_UP_DIFFERENTLY`,
-  ALREADY_EXISTS: `ALREADY_EXISTS`
+  ALREADY_EXISTS: `ALREADY_EXISTS`,
+  INVALID_NUMBER: `INVALID_NUMBER`,
+  CHANGES_APPLIED: `CHANGES_APPLIED`,
+  CHANGES_NOT_APPLIED: `CHANGES_NOT_APPLIED`, 
   
 }
 
-export const verifyAccessToken =  (token)=>{
+export const verifyAccessToken =  (token )=>{
   return  jwt.verify(token, process.env.JWT_TOKEN_SECRET, async(err,result)=>{
     if(err) {
         console.log(err)

@@ -8,6 +8,8 @@ import {Login,User} from '../../MongoDb/models/index.js'
 import { serverValidatePw } from '../RegisterRoute.js'
 import { validatePassword, verifyAccessToken } from '../../utils.js'
 import { conn } from '../../MongoDb/connect.js'
+import { generateAccessToken } from '../tokenRoute.js'
+import { validateNumber } from '../../MongoDb/models/user.js'
 
 dotenv.config();
 
@@ -214,7 +216,7 @@ router.route('/').post(async(req,res)=>{
         }
 
         console.log(req.body)
-        const isLogged = await Login.find({email:userEmail});
+        const isLogged = await User.find({email:userEmail});
     
         if(isLogged.length < 1) {
             return res.status(404).send({success:false, message:Errors.NOT_FOUND})
@@ -232,7 +234,8 @@ router.route('/').post(async(req,res)=>{
             if(updatedParams?.email){
                 let user=   await User.updateOne({email: userEmail}, {email :updatedParams?.email },  {upsert:true}, {session});
                 let login = await Login.updateOne({email: userEmail}, {email :updatedParams?.email },  {upsert:true}, {session});
-
+                console.log('login',login);
+                console.log('user',user);
                 if (user?.modifiedCount === 0 && login?.modifiedCount === 0 (user?.acknowledged && !login?.acknowledged)){
                     changesArray.newEmail = `${updatedParams?.email}  hasn't been applied`
                      console.log(changesArray.newEmai)
@@ -240,7 +243,7 @@ router.route('/').post(async(req,res)=>{
                     changesArray.newEmail = updatedParams?.email
                      console.log(changesArray.newEmail)
                 }
-                return changesArray
+                
             }
             if(updatedParams.fullName){
              
@@ -252,9 +255,15 @@ router.route('/').post(async(req,res)=>{
                     changesArray.newFullName = updatedParams?.fullName
                      console.log(changesArray.newFullName)
                 }
-                return changesArray
+                
             }
             if(updatedParams?.phone){
+                let isValid = validateNumber(updatedParams?.phone)
+                
+                if(!isValid){
+                    changesArray.newPhone = Errors?.INVALID_NUMBER
+                    throw new Error({message: Errors?.INVALID_NUMBER})
+                } 
                
                   let user=   await User.updateOne({email: userEmail}, {phone :updatedParams?.phone },  {upsert:true}, {session});
                 if (user?.modifiedCount === 0 && user?.acknowledged ){
@@ -292,8 +301,9 @@ router.route('/').post(async(req,res)=>{
                 
             }
             if(updatedParams?.password){
+                console.log(`token:`, isValidToken);
                 const isValid = await serverValidatePw(isValidToken?.fullName,userEmail,updatedParams?.password,res)
-                if(!isValid?.success)  console.log(isValid); 
+                if(!isValid?.success) return console.log(isValid); 
                 console.log(isValid);
                 const salt = bcrypt.genSaltSync(10);
                 const hashPw = bcrypt.hashSync(updatedParams?.password, salt)
@@ -312,32 +322,28 @@ router.route('/').post(async(req,res)=>{
             }
             if(Object.keys(changesArray).length === 0 && changesArray.constructor === Object) return res.status(400).send({success:false, message:`CHANGES HAVEN'T BEEN APPLIED`})
             console.log(changesArray)
+            let userData = {
+              email:isLogged[0]?.email,
+              fullName: isLogged[0]?.fullName,
+              bio:isLogged[0]?.bio ,
+              phone:isLogged[0]?.phone ,
+              picture: isLogged[0]?.picture,
+              loggedThrough: isLogged[0]?.loggedThrough,
+            }
+            console.log(userData);
+            let accessToken = await generateAccessToken(userData);
+            console.log(`token: ${accessToken}`);
             await session.commitTransaction(); 
             session.endSession()
-            return res.status(200).send({success:true, data: {changes: changesArray}})
+            return res.status(200).send({success:true, data: { message:Errors.CHANGES_APPLIED, changes: changesArray, accessToken}})
 
         })
-
-
 
     } catch (error) {
         return res.status(500).send({success:false,message:error |`SOMETHING WENT WRONG`})
 
     }
 })
-// const handleDBchange = async({email, type, updatedParam,newParam, session})=>{
-//     console.log(updatedParam)
-//     console.log(newParam)
-//     return type === 'Login' ? (
-//         await Login.updateOne({email: email}, {updatedParam:newParam },  {upsert:true}, {session})
 
-//     ) : (
-//        await User.updateOne({email: email}, {updatedParam:newParam },  {upsert:true},  {session})
-
-//     );
-
-   
-
-// }
 
 export default router
