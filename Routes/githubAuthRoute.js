@@ -16,7 +16,7 @@ const router = express.Router()
 export const handleGithubSingin = async(accessToken ,res)=>{
     try {
         
-        jwt.verify(accessToken, process.env.JWT_TOKEN_SECRET, async (err,result) => {
+       return  await jwt.verify(accessToken, process.env.JWT_TOKEN_SECRET, async (err,result) => {
             if(err) {
                 console.log(err)
                 return res.status(404).send({success:false, message:err})
@@ -30,29 +30,30 @@ export const handleGithubSingin = async(accessToken ,res)=>{
                 loggedThrough: result?.loggedThrough,
                 bio: result?.bio,
                 phone: result?.phone,
+                loggedThrough: result?.loggedThrough
                
             }
             const GeneratedRefreshToken = generateRefreshToken(user)
             const GeneratedAccessToken = generateAccessToken(user)
             
-            const isLoggedAlready = await Login.find({email: user?.email})
-            if(isLoggedAlready.length !== 0){
-                console.log(Errors);
-                return res.status(400).send({success:false, message: Errors.SIGNED_UP_DIFFERENTLY, loggedThrough: isLoggedAlready[0]?.loggedThrough})
+            const isLoggedAlready = await Login.findOne({email: user?.email})
+            if(!isLoggedAlready){
+                return res.status(400).send({success:false, message:Errors.NOT_FOUND, loggedThrough: isLoggedAlready[0]?.loggedThrough})
             }
+            if(isLoggedAlready.loggedThrough !== 'Github') return res.status(400).send({success:false, message:Errors.SIGNED_UP_DIFFERENTLY, loggedThrough: isLoggedAlready?.loggedThrough})
 
-            await session.withTransaction(async()=>{
+
+           return await session.withTransaction(async()=>{
 
                 const GeneratedAccessToken = generateAccessToken(user)
                 
-                const isLoggedAlready = await Login.find({email: email})
 
                 
-                if(isLoggedAlready.length !== 0 && user.loggedThrough !== 'Github' ){
+                if(isLoggedAlready && user.loggedThrough !== 'Github' ){
                     return res.status(400).send({success:false, message: `LOGGED_DIFFERENTLY`, loggedThrough: isLoggedAlready[0]?.loggedThrough})
                 }
           
-                res.status(201).send({success:true,data:{loggedThrough:user.loggedThrough, user: user}});
+                res.status(201).send({success:true,data:{accessToken: GeneratedAccessToken, loggedThrough:user.loggedThrough, user: user}});
                await session.commitTransaction(); 
                 session.endSession()
             })
@@ -103,7 +104,7 @@ router.route('/register').post(async(req,res) =>{
                 email:user.email,
                 loggedThrough: user.loggedThrough,
 
-            }]);
+            }], {session});
 
             const dbUser = await User.create([{
                 email:user.email,
@@ -112,9 +113,11 @@ router.route('/register').post(async(req,res) =>{
                 email: GHuser?.email,
                 bio: GHuser?.bio,
                 phone: GHuser?.phone,
-                
-            }]);
+                loggedThrough: user.loggedThrough,
 
+                
+            }], {session});
+            // if(!dbLOGIN || !dbUser) return  res.status(500).send({success:false, message:`something went wrong`})
             console.log(`success`)
             const GeneratedAccessToken = generateAccessToken(user)
 
@@ -146,14 +149,11 @@ router.route('/getAccessToken').get( async (req,res) =>{
         const ghResponse = await ghAccessToken.json()
         
         console.log(ghResponse)
-
-        if(ghResponse?.access_token){
-            return res.status(200).send({success:true,data: {accessToken: ghResponse.access_token}})
-            
+        if(!ghResponse.access_token){
+            return res.status(400).send({success:false, message: ghResponse.error})
         }
-        // if(!ghResponse.access_token){
-        //     return res.status(400).send({success:false, message: ghResponse.error})
-        // }
+
+            return res.status(200).send({success:true,data: {accessToken: ghResponse.access_token}})
         
     } catch(error){
        console.log(error)
@@ -167,6 +167,7 @@ router.route('/getAccessToken').get( async (req,res) =>{
 router.route('/getUserToken').get(async(req,res)=>{
     try {
         const session = await conn.startSession()
+        console.log(`token: ${req.get("Authorization")}`);
         const octokit = new Octokit({
          auth: req.get('Authorization')
          })

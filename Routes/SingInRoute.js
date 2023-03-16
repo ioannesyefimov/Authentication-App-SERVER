@@ -26,7 +26,7 @@ router.route('/').post(async(req,res)=>{
            return handleGithubSingin(accessToken, res)
         }
         if(accessToken  ){
-            return handleUserData(accessToken,res)
+            return handleUserData(accessToken,loggedThrough, res)
         } 
         // }
         if(!email || !password) return res.status(400).send({success:false, message:`INCORRECT_FORM_SUBMISSION`})

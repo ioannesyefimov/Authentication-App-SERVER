@@ -16,195 +16,51 @@ dotenv.config();
 
 const router = express.Router()
 
-router.route('/picture').post(async(req,res)=>{
-
-    const {email, updatedParam, accessToken} = req.body
-    const isLogged = await Login.find({email:email})
-    if(isLogged.length < 1) {
-        return res.status(404).send({success:false, message:Errors.NOT_FOUND})
-    }
-
-    const isValidToken = await verifyAccessToken(accessToken)
-
-    if(isValidToken?.err) return res.status(400).send({success:false,message:isValidToken?.err})
-
-    const USER = await User.updateOne({email:email}, {picture: updatedParam}, {upsert:true})
-    
-
-    if(USER?.modifiedCount == 0){
-        return res.status(400).send({success:false,message:`PICTURE  hasn't been applied`})
-    } else if (USER?.acknowledged && USER?.modifiedCount !== 0){
-        return res.status(200).send({success:true,data:{message:`PICTURE HAS BEEN CHANGED TO ${updatedParam}`, url: updatedParam}})
-    } else {
-        return res.status(500).send({success:false,message:`something went wrong: ${USER}`})
-    }
-})
-
-router.route('/name').post(async(req,res)=>{
-
-    const {email, updatedParam,accessToken} = req.body
-    const isLogged = await Login.find({email:email})
-    if(isLogged.length < 1) {
-        return res.status(404).send({success:false, message:Errors.NOT_FOUND})
-    }
-    
-    const isValidToken = await verifyAccessToken(accessToken)
-
-    if(isValidToken?.err) return res.status(400).send({success:false,message:isValidToken?.err})
-
-
-    const USER = await User.updateOne({email:email}, {fullName: updatedParam}, {upsert:true})
-    
-
-    if(USER?.modifiedCount == 0){
-        return res.status(400).send({success:false,message:`Name  hasn't been applied`})
-    } else if(USER?.acknowledged && USER?.modifiedCount !== 0 ){
-        return res.status(200).send({success:true,data:{message:`NAME HAS BEEN CHANGED TO ${updatedParam}`, name: updatedParam}})
-    } else {
-        return res.status(500).send({success:false,message:`something went wrong: ${USER}`})
-    }
-})
-
-router.route('/phone').post(async(req,res)=>{
-
-    const {email, updatedParam, accessToken} = req.body
-    const isLogged = await Login.find({email:email})
-    if(isLogged.length < 1) {
-        return res.status(404).send({success:false, message:Errors.NOT_FOUND})
-    }
-    
-    const isValidToken = await verifyAccessToken(accessToken)
-
-    if(isValidToken?.err) return res.status(400).send({success:false,message:isValidToken?.err})
-
-
-    const USER = await User.updateOne({email:email}, {phone: updatedParam}, {upsert:true})
-    
-    if(USER?.modifiedCount == 0){
-        return res.status(400).send({success:false,message:`Name  hasn't been applied`})
-    } else if (USER?.acknowledged && USER?.modifiedCount !== 0){
-        return res.status(200).send({success:true,data:{message:`PHONE HAS BEEN CHANGED TO ${updatedParam}`, phone: updatedParam}})
-    } else {
-        return res.status(500).send({success:false,message:`something went wrong: ${USER}`})
-    }
-})
-
-router.route('/email').post(async(req,res)=>{
+router.route('/delete').delete(async(req,res)=>{
     try {
         const session = await conn.startSession()
-        const {email, updatedParam, accessToken} = req.body
-        const isLogged = await Login.find({email:email})
-        if(isLogged.length < 1) {
-            console.log(Errors.NOT_FOUND);
+
+        const {userEmail, updatedParams,accessToken} = req.body
+
+        const isValidToken = await verifyAccessToken(accessToken);
+        if(isValidToken?.err) return res.status(400).send({success:false,message:isValidToken?.err})
+
+        const isLogged = await Login.findOne({email:userEmail})
+        if(!isLogged) {
             return res.status(404).send({success:false, message:Errors.NOT_FOUND})
         }
-        
-        const isValidToken = await verifyAccessToken(accessToken)
-
-        if(isValidToken?.err) return res.status(400).send({success:false,message:isValidToken?.err})
 
         return await session.withTransaction(async()=>{
+            if(!isLogged?.password && isLogged?.loggedThrough !== 'Internal'){
+                let isDeletedLOGIN = await Login.deleteOne({email: userEmail}, {session});
+                let isDeletedUSER = await User.deleteOne({email: userEmail}, {session});
+                console.log(`USER:`, isDeletedUSER);
+                console.log(`LOGIN:`, isDeletedLOGIN);
+                return res.status(200).send({success:true, data: { message:`USER_IS_DELETED`}})
 
-            const USER = await User.updateOne({email:email}, {email: updatedParam}, {upsert:true}, {session})
-            const LOGIN = await Login.updateOne({email:email}, {email: updatedParam}, {upsert:true}, {session})
-            // 
-    
-            if(USER?.modifiedCount == 0 && LOGIN?.modifiedCount == 0 ){
-                return res.status(400).send({success:false,message:`Email  hasn't been applied`})
             }
+            const isValidPw = bcrypt.compareSync(updatedParams?.password, isLogged?.password)
+            console.log("ISVALID:",isValidPw)
+            if(!isValidPw) return res.status(400).send({success:false,message:Errors.WRONG_PASSWORD})
+            let isDeletedLOGIN = await Login.deleteOne({email: userEmail}, {session});
+            let isDeletedUSER = await Login.deleteOne({email: userEmail}, {session});
 
-             res.status(200).send({success:true,data:{message:`Email HAS BEEN CHANGED TO ${updatedParam}`, email: updatedParam}})
+            if(!isDeletedLOGIN || !isDeletedUSER) return res.status(500).send({success:false,message:`USER_ISN'T_DELETED`})
+            console.log(`USER:`, isDeletedUSER);
+            console.log(`LOGIN:`, isDeletedLOGIN);
+            console.log(isLogged);
             await session.commitTransaction(); 
             session.endSession()
+            return res.status(200).send({success:true, data: { message:`USER_IS_DELETED`}})
+
         })
-    } catch (error) {
-        return res.status(500).send({success:false,message:error})
 
-    }
-
-    
-})
-
-router.route('/bio').post(async(req,res)=>{
-
-    const {email, updatedParam,accessToken} = req.body
-    const isLogged = await Login.find({email:email})
-    if(isLogged.length < 1) {
-        return res.status(404).send({success:false, message:Errors.NOT_FOUND})
-
-    }
-
-    const isValidToken = await verifyAccessToken(accessToken)
-
-    if(isValidToken?.err) return res.status(400).send({success:false,message:isValidToken?.err})
-
-
-
-    const USER = await User.updateOne({email:email}, {bio: updatedParam}, {upsert:true})
-    
-
-    if(USER?.modifiedCount == 0){
-        return res.status(400).send({success:false,message:`BIO  hasn't been applied`})
-        return res.status(200).send({success:true,data:{message:`BIO HAS BEEN CHANGED TO ${updatedParam}`, bio: updatedParam}})
-        
-    
-    } else {
-        return res.status(500).send({success:false,message:`something went wrong: ${USER}`})
-    }
-})
-
-router.route('/password').post(async(req,res)=>{
-
-    try {
-        
-    const {email, updatedParam, oldPassword, accessToken, loggedThrough} = req.body
-    if(!updatedParam ) return res.status(400).send({success:false, message:`MISSING ARGUMENT`})
-    const isLogged = await Login.find({email:email})
-    
-    if(isLogged.length < 1) {
-        return res.status(404).send({success:false, message:Errors.NOT_FOUND})
-    }
-
-    const salt = bcrypt.genSaltSync(10);
-    const hashPw = bcrypt.hashSync(updatedParam, salt)
-    // validate if user has been signed up through social 
-    if(isLogged[0].loggedThrough !=='Internal' && !oldPassword){
-        const isValidToken = await verifyAccessToken(accessToken)
-
-        if(isValidToken?.err) return res.status(400).send({success:false,message:isValidToken?.err})
-
-        console.log(`password: ${updatedParam}`)
-        const isValid = serverValidatePw(isValidToken?.result?.fullName,isValidToken?.email,updatedParam,res)
-        if(isValid != `valid`) return 
-        console.log(`valid`)
-        const updatedPw = await Login.updateOne({email:email}, {password: hashPw})
-        if(updatedPw?.modifiedCount == 0){
-            return res.status(400).send({success:false,message:`Password  hasn't been applied`})
-        }
-        return res.status(200).send({success:true, message: `PASSWORD HAS BEEN ADDED`})
-    }
-
-    // validate if user has been signed up manually through register (Internal)
-    const isVALID = bcrypt.compareSync(oldPassword, isLogged[0]?.password)
-    if(!isVALID){
-        return res.status(400).send({success:false, message:Errors.WRONG_PASSWORD});
-    } 
-
-    const updatedPw = await Login.updateOne({email:email}, {password: hashPw})
-
-    if(updatedPw?.modifiedCount == 0){
-        return res.status(400).send({success:false,message:`PASSWORD  hasn't been applied`})
-    }else if(updatedPw?.modifiedCount !== 0){
-        return res.status(200).send({success:true,data:{message:`PASSWORD HAS BEEN CHANGED`}})
-    }
         
     } catch (error) {
-        return res.status(500).send({success:false,message:error || `SOMETHING_WENT_WRONG`})
-
+        
     }
 
 })
-
 
 router.route('/').post(async(req,res)=>{
 

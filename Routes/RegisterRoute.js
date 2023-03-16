@@ -75,7 +75,7 @@ router.route('/').post(async(req,res)=>{
         }
 
 
-        await session.withTransaction(async()=>{
+       return await session.withTransaction(async()=>{
             let user = {
                 email: email,
                 fullName: fullName,

@@ -15,27 +15,30 @@ dotenv.config();
 
 const router = express.Router()
 
-export const handleUserData = async(accessToken,res) => {
+export const handleUserData = async(accessToken,loggedThrough,res) => {
     try {
         if(accessToken){
             const  isValidToken = await verifyAccessToken(accessToken) 
 
-            if(isValidToken?.err) return res.status(400).send({success:false,message:err})
+            if(isValidToken?.err) return res.status(400).send({success:false, message: isValidToken.err?.message || isValidToken?.err})
                 console.log(isValidToken)
-                const USER = await User.find({email: isValidToken?.email})
+                const USER = await User.findOne({email: isValidToken?.email})
+                if(USER.loggedThrough !== loggedThrough) return res.status(404).send({success:false,message:Errors.SIGNED_UP_DIFFERENTLY, loggedThrough: USER.loggedThrough})
+
                 if(USER.length <1 )return res.status(404).send({success:false,message:`NOT_FOUND`})
                 const user = {
-                    fullName: USER[0]?.fullName  ,
-                    email: USER[0].email,
-                    picture: USER[0]?.picture || null,
-                    bio: USER[0]?.bio || null,
-                    phone: USER[0]?.phone || null,
-                    loggedThrough: USER[0]?.loggedThrough
+                    fullName: USER?.fullName  ,
+                    email: USER.email,
+                    picture: USER?.picture || null,
+                    bio: USER?.bio || null,
+                    phone: USER?.phone || null,
+                    loggedThrough: USER?.loggedThrough
                 }
                 console.log(user)
+
                 return res.status(200).send({
                     success:true,
-                    data: {user, loggedThrough: USER[0]?.loggedThrough}
+                    data: {user, loggedThrough: USER?.loggedThrough}
                 })
         }
     }catch(err){
@@ -47,30 +50,27 @@ export const handleUserData = async(accessToken,res) => {
 
 router.route('/').post(async(req,res)=>{
     try {
-    const {accessToken} =req.body        
+    const {accessToken, loggedThrough} =req.body        
         if(accessToken){
-            return jwt.verify(accessToken, process.env.JWT_TOKEN_SECRET, (err,result) => {
-                if(err) {
-                    console.log(err)
-                    return res.status(404).send({success:false, message:err})
-                }
-                console.log(result)
-                const USER = User.find({email: result?.email})
-                if(USER.length <1 )return res.status(404).send({success:false,message:`NOT_FOUND`})
-                const user = {
-                    fullName: USER[0]?.fullName  ,
-                    email: USER[0].email,
-                    picture: USER[0]?.picture || null,
-                    bio: USER[0]?.bio || null,
-                    phone: USER[0]?.phone || null,
-                    loggedThrough: USER[0]?.loggedThrough
-                }
-                
-                console.log(user)
-                return res.status(200).send({
-                    success:true,
-                    data: {user, loggedThrough: result?.loggedThrough}
-                })
+            const isValidToken = await verifyAccessToken(accessToken);
+            if(isValidToken?.err) return res.status(400).send({success:false,message:err})
+            const USER = User.findOne({email: isValidToken?.email})
+            if(!USER )return res.status(404).send({success:false,message:`NOT_FOUND`})
+            if(USER.loggedThrough !== loggedThrough) return res.status(404).send({success:false,message:Errors.SIGNED_UP_DIFFERENTLY, loggedThrough: USER.loggedThrough})
+
+            const user = {
+                fullName: USER?.fullName  ,
+                email: USER.email,
+                picture: USER?.picture || null,
+                bio: USER?.bio || null,
+                phone: USER?.phone || null,
+                loggedThrough: USER?.loggedThrough
+            }
+            
+            console.log(user)
+            return res.status(200).send({
+                success:true,
+                data: {user, loggedThrough: result?.loggedThrough}
             })
         }
     } catch (error) {
