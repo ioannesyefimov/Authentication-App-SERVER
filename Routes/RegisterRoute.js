@@ -46,34 +46,12 @@ router.route('/').post(async(req,res)=>{
         const userCredentials = {
             fullName, email, picture
         }
-        // validate form submission
-
-        const isValid = serverValidatePw(fullName, email,password,res)
-        // if(!isValid?.success) return
-        // if(!fullName|| !email|| !password) {
-        //     return res.status(400).send(`incorrect form submission`)
-        // } 
-        // else  if(validatePassword(password,fullName) == Errors.INVALID_PASSWORD){
-        //     console.log()
-        //     return res.status(400).send({success:false,message:Errors.INVALID_PASSWORD})
-        // } 
-        // else if(validatePassword(password, fullName) == Errors.PASSWORD_CONTAINS_NAME){
-        //     console.log()
-        //     return res.status(400).send({success:false, message:Errors.PASSWORD_CONTAINS_NAME})
-    
-        // }
-        // if(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email) === false) {
-        //     console.log()
-        //     return res.status(400).send({success:false,message:Errors.INVALID_EMAIL})
-        // }    
-
         const hash = bcrypt.hashSync(password, 10)
 
         const isLoggedAlready = await Login.find({email: email})
         if(isLoggedAlready.length !== 0){
             return res.status(400).send({success:false, message: Errors.SIGNED_UP_DIFFERENTLY, loggedThrough: isLoggedAlready[0]?.loggedThrough})
         }
-
 
        return await session.withTransaction(async()=>{
             let user = {

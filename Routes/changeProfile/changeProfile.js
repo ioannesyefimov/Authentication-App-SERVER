@@ -3,13 +3,14 @@ import * as dotenv from "dotenv"
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 
-import { Errors } from '../../utils.js'
+import { Errors, isTrue } from '../../utils.js'
 import {Login,User} from '../../MongoDb/models/index.js'
 import { serverValidatePw } from '../RegisterRoute.js'
 import { validatePassword, verifyAccessToken } from '../../utils.js'
 import { conn } from '../../MongoDb/connect.js'
 import { generateAccessToken } from '../tokenRoute.js'
 import { validateNumber } from '../../MongoDb/models/user.js'
+import { handleUploadPicture } from '../uploadRoute/uploadRoute.js'
 
 dotenv.config();
 
@@ -17,19 +18,23 @@ dotenv.config();
 const router = express.Router()
 
 router.route('/delete').delete(async(req,res)=>{
+
     try {
+        console.log(`DELETE USER IS WORKING`)
         const session = await conn.startSession()
 
         const {userEmail, updatedParams,accessToken} = req.body
+        console.log(`body:`, req.body);
+        if(!userEmail || !accessToken ) return res.status(400).send({success:false, message:Errors.MISSING_ARGUMENTS})
 
         const isValidToken = await verifyAccessToken(accessToken);
         if(isValidToken?.err) return res.status(400).send({success:false,message:isValidToken?.err})
 
         const isLogged = await Login.findOne({email:userEmail})
-        if(!isLogged) {
+        if(isLogged === null) {
             return res.status(404).send({success:false, message:Errors.NOT_FOUND})
         }
-
+      
         return await session.withTransaction(async()=>{
             if(!isLogged?.password && isLogged?.loggedThrough !== 'Internal'){
                 let isDeletedLOGIN = await Login.deleteOne({email: userEmail}, {session});
@@ -57,7 +62,8 @@ router.route('/delete').delete(async(req,res)=>{
 
         
     } catch (error) {
-        
+        return res.status(500).send({success:false, message:error})
+
     }
 
 })
@@ -68,6 +74,12 @@ router.route('/').post(async(req,res)=>{
         const session = await conn.startSession()
     
         const {userEmail, accessToken, updatedParams } = req.body 
+        console.log(`reg body:`, req.body)
+
+        if(!updatedParams || !isTrue(updatedParams).is) {
+            return res.status(400).send({success:false,message:Errors.MISSING_ARGUMENTS})
+        } 
+            
         let changesArray = {
         }
 
@@ -81,8 +93,8 @@ router.route('/').post(async(req,res)=>{
         // validate if user has been signed up through social 
         // if(isLogged[0].loggedThrough !=='Internal' && !oldPassword){
         const isValidToken = await verifyAccessToken(accessToken);
-        if(isValidToken?.err) return res.status(400).send({success:false,message:isValidToken?.err})
-
+        if(isValidToken?.err) return res.status(400).send({success:false,message:isValidToken?.err?.message})
+        console.log(`data :`, updatedParams)
 
         return await session.withTransaction(async()=>{
             console.log(`transaction started`)
@@ -144,7 +156,11 @@ router.route('/').post(async(req,res)=>{
                 
             }
             if(updatedParams?.picture){
-                let user=   await User.updateOne({email: userEmail}, {picture :updatedParams?.picture },  {upsert:true}, {session});
+                console.log(`picture: ${updatedParams?.picture}`)
+                let uri = await handleUploadPicture(updatedParams?.picture);
+                if(!uri?.success) return res.status(400).send({success:false, message: uri?.message})
+
+                let user=   await User.updateOne({email: userEmail}, {picture: uri?.url },  {upsert:true}, {session});
                 console.log(user);
                 if (user?.modifiedCount === 0 && user?.acknowledged){
                     changesArray.newPicture = `${updatedParams?.picture}  hasn't been applied`

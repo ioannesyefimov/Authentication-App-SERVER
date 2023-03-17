@@ -9,6 +9,22 @@ cloudinary.config({
 })
 const router = express.Router()
 
+export const handleUploadPicture = async(image)=>{
+    try {
+    
+       const uploadImage = await uploadImageFunc(image);
+       if(!uploadImage.success){
+        console.log(uploadImage)
+        return {success:false,message:uploadImage.message}
+       }
+    
+       return {success:true,url: uploadImage.data?.url}
+    } catch (error) {
+        return {success:false,message:error |`SOMETHING WENT WRONG`}
+
+    }
+}
+
 
 router.route('/picture').post(async(req,res)=>{
     try {

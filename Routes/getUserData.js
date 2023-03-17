@@ -9,6 +9,7 @@ import Login from '../MongoDb/models/login.js'
 
 import jwt from 'jsonwebtoken'
 import { Errors, verifyAccessToken } from '../utils.js'
+import { generateAccessToken } from './tokenRoute.js'
 
 dotenv.config();
  
@@ -36,9 +37,10 @@ export const handleUserData = async(accessToken,loggedThrough,res) => {
                 }
                 console.log(user)
 
+                const GeneratedAccessToken = generateAccessToken(user) 
                 return res.status(200).send({
                     success:true,
-                    data: {user, loggedThrough: USER?.loggedThrough}
+                    data: {user, loggedThrough: USER?.loggedThrough, accessToken: GeneratedAccessToken}
                 })
         }
     }catch(err){

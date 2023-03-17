@@ -72,7 +72,8 @@ export const Errors = {
   INVALID_NUMBER: `INVALID_NUMBER`,
   CHANGES_APPLIED: `CHANGES_APPLIED`,
   CHANGES_NOT_APPLIED: `CHANGES_NOT_APPLIED`,
-  JWT_MALFORMED: `jwt malformed` 
+  JWT_MALFORMED: `jwt malformed` ,
+  MISSING_ARGUMENTS: `MISSING_ARGUMENTS`,
   
 }
 
@@ -87,6 +88,21 @@ export const verifyAccessToken =  (token )=>{
   
 }
 
+
+export const isObj = (obj) =>{
+  return (typeof obj === 'object' && !Array.isArray(obj) && obj !== null && Object)
+
+}
+export const isTrue = (arg) =>{
+  if(Array.isArray(arg) && !arg.length){
+    return {arg, is:false}
+  }
+  if(isObj(arg) && !Object.keys(arg).length){
+    return {arg, is: false}
+  }
+  return {arg, is: !!arg}
+}
+ 
 export const handleChangeProfile = async(req,res)=>{
   try {
     const session = await conn.startSession()

@@ -26,10 +26,10 @@ export const handleGoogleSingin = async(credentials, res) =>{
             const profile =  verificationResponse?.payload;
             console.log(profile)
     
-            const dbUser = await Login.find({email:profile?.email})
+            const dbUser = await Login.findOne({email:profile?.email})
             // console.log(existsInDb)
     
-            if(dbUser.length < 1){
+            if(!dbUser){
                 return res.status(400).json({
                     message: "You are not registered. Please sign up."
                 });
@@ -44,8 +44,8 @@ export const handleGoogleSingin = async(credentials, res) =>{
                 loggedThrough: 'Google'
                
             }
-            if(dbUser[0]?.loggedThrough !== 'Google'){
-                return res.status(400).send({success:false, message: Errors.SIGNED_UP_DIFFERENTLY, loggedThrough: dbUser[0]?.loggedThrough})
+            if(dbUser?.loggedThrough !== 'Google'){
+                return res.status(400).send({success:false, message: Errors.SIGNED_UP_DIFFERENTLY, loggedThrough: dbUser?.loggedThrough})
             }
         
 
@@ -67,7 +67,9 @@ export const handleGoogleSingin = async(credentials, res) =>{
 router.route('/signin').post(async(req,res)=>{
     
     try {
-        if(req.body.credential) {
+        console.log(`google signin is working`)
+        if(!req.body.credential) return res.status(400).send({success:false,message:Errors.MISSING_ARGUMENTS})
+        
             // console.log(req.body.credential)
             const verificationResponse = await verifyGoogleToken(req.body.credential)
             if(verificationResponse.error) {
@@ -77,28 +79,28 @@ router.route('/signin').post(async(req,res)=>{
             const profile = await verificationResponse?.payload;
             console.log(profile.email)
     
-            const dbUser = await User.find({email:profile?.email})
+            const dbUser = await User.findOne({email:profile?.email})
             // console.log(existsInDb)
     
-            if(dbUser.length < 1){
+            if(!dbUser){
                 return res.status(400).json({
                     message: "You are not registered. Please sign up."
                 });
             }
             let user = {
 
-                fullName: dbUser[0]?.fullName,
-                picture: dbUser[0]?.picture,
-                email: dbUser[0]?.email,
-                bio: dbUser[0]?.bio,
-                phone: dbUser[0]?.phone,
+                fullName: dbUser?.fullName,
+                picture: dbUser?.picture,
+                email: dbUser?.email,
+                bio: dbUser?.bio,
+                phone: dbUser?.phone,
                 loggedThrough: 'Google'
                
             }
-            console.log(dbUser[0]);
+            console.log(dbUser);
             console.log(req.body.loggedThrough);
-            if(dbUser[0]?.loggedThrough !== req.body.loggedThrough){
-                return res.status(400).send({success:false, message: Errors.SIGNED_UP_DIFFERENTLY, loggedThrough: dbUser[0]?.loggedThrough})
+            if(dbUser?.loggedThrough !== req.body.loggedThrough){
+                return res.status(400).send({success:false, message: Errors.SIGNED_UP_DIFFERENTLY, loggedThrough: dbUser?.loggedThrough})
             }
         
 
@@ -110,7 +112,7 @@ router.route('/signin').post(async(req,res)=>{
                     accessToken: generateAccessToken(user)
                 }
             });
-        }
+        
     } catch (error) {
         res.status(500).json({
             message: error?.message || error,
@@ -143,11 +145,12 @@ router.route('/register').post(async(req,res)=>{
                    
                 }
                 
-                const isLoggedAlready = await Login.find({email: user?.email})
-                if(isLoggedAlready.length !== 0){
+                const isLoggedAlready = await Login.findOne({email: user?.email});
+                 console.log(isLoggedAlready)
+                if(isLoggedAlready !==null){
                     return res.status(400).send({
                         success:false, message: Errors.ALREADY_EXISTS,
-                        loggedThrough: isLoggedAlready[0]?.loggedThrough
+                        loggedThrough: isLoggedAlready?.loggedThrough
                         })
                 }
                 const GeneratedRefreshToken = generateRefreshToken(user)
