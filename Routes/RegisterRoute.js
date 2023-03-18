@@ -16,8 +16,9 @@ dotenv.config();
 const router = express.Router()
 
 export const  serverValidatePw = ( fullName,email,password,res) =>{
+    console.log(`server pw validation started`);
     if(!fullName|| !email|| !password) {
-        return   res.status(400).send(`incorrect form submission`)
+        return   res.status(400).send(Errors.MISSING_ARGUMENTS)
     } 
     if(validatePassword(password, fullName) === `valid`){
         console.log(`valid server checkr`);
@@ -25,16 +26,18 @@ export const  serverValidatePw = ( fullName,email,password,res) =>{
     }else 
        
      if(validatePassword(password,fullName) == Errors.INVALID_PASSWORD){
-        return   res.status(400).send({success:false,message:Errors.INVALID_PASSWORD})
+         console.log(Errors.INVALID_PASSWORD)
+        return   {success:false,message:Errors.INVALID_PASSWORD}
+
     } 
     else if(validatePassword(password, fullName) == Errors.PASSWORD_CONTAINS_NAME){
-        console.log()
-        return   res.status(400).send({success:false, message:Errors.PASSWORD_CONTAINS_NAME})
+        console.log(Errors.PASSWORD_CONTAINS_NAME)
+        return   {success:false, message:Errors.PASSWORD_CONTAINS_NAME}
 
     }
     if(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email) === false) {
         console.log()
-        return   res.status(400).send({success:false,message:Errors.INVALID_EMAIL})
+        return   {success:false,message:Errors.INVALID_EMAIL}
     }    
 }
 
@@ -43,15 +46,22 @@ router.route('/').post(async(req,res)=>{
         const session = await conn.startSession()
 
         const {fullName, email, password, picture, loggedThrough} = req.body
-        const userCredentials = {
-            fullName, email, picture
+        
+        const isLoggedAlready = await Login.findOne({email: email})
+        if(isLoggedAlready !== null){
+            return isLoggedAlready?.loggedThrough !== 'Internal' ? 
+             res.status(400).send({
+                success:false, message: Errors.SIGNED_UP_DIFFERENTLY, 
+                loggedThrough: isLoggedAlready?.loggedThrough
+            }) :
+            res.status(400).send({
+                success:false, message: Errors.ALREADY_EXISTS,
+                loggedThrough: isLoggedAlready?.loggedThrough
+            })
         }
+        let isValidPassword = await serverValidatePw(fullName, email,password,res);
+        if(!isValidPassword?.success) return res.status(400).send({success:false,message:isValidPassword?.message})
         const hash = bcrypt.hashSync(password, 10)
-
-        const isLoggedAlready = await Login.find({email: email})
-        if(isLoggedAlready.length !== 0){
-            return res.status(400).send({success:false, message: Errors.SIGNED_UP_DIFFERENTLY, loggedThrough: isLoggedAlready[0]?.loggedThrough})
-        }
 
        return await session.withTransaction(async()=>{
             let user = {
@@ -62,8 +72,8 @@ router.route('/').post(async(req,res)=>{
                 bio: null,
                 phone: null,
             }
-            const refreshToken = generateRefreshToken(user)
-            const accessToken = generateAccessToken(user)
+            const refreshToken = generateRefreshToken(user);
+            const accessToken = generateAccessToken(user);
 
             const loginUser = await Login.create([{
                 email: email,

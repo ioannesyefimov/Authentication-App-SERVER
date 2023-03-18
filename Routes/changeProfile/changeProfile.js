@@ -30,20 +30,26 @@ router.route('/delete').delete(async(req,res)=>{
         const isValidToken = await verifyAccessToken(accessToken);
         if(isValidToken?.err) return res.status(400).send({success:false,message:isValidToken?.err})
 
-        const isLogged = await Login.findOne({email:userEmail})
+        const isLogged = await Login.findOne({email:userEmail});
         if(isLogged === null) {
             return res.status(404).send({success:false, message:Errors.NOT_FOUND})
-        }
+        };
       
         return await session.withTransaction(async()=>{
             if(!isLogged?.password && isLogged?.loggedThrough !== 'Internal'){
                 let isDeletedLOGIN = await Login.deleteOne({email: userEmail}, {session});
                 let isDeletedUSER = await User.deleteOne({email: userEmail}, {session});
+
+                if(isDeletedUSER.acknowledged && isDeletedUSER?.deletedCount === 0 || isDeletedLOGIN.acknowledged && isDeletedLOGIN?.deletedCount == 0){
+                    session.abortTransaction()
+                    return res.status(500).send({success:false, message: Errors?.ABORTED_TRANSACTION})
+                }
                 console.log(`USER:`, isDeletedUSER);
                 console.log(`LOGIN:`, isDeletedLOGIN);
                 return res.status(200).send({success:true, data: { message:`USER_IS_DELETED`}})
 
             }
+            if(!updatedParams.password) return res.status(400).send({success:false, message:Errors.MISSING_ARGUMENTS})
             const isValidPw = bcrypt.compareSync(updatedParams?.password, isLogged?.password)
             console.log("ISVALID:",isValidPw)
             if(!isValidPw) return res.status(400).send({success:false,message:Errors.WRONG_PASSWORD})
@@ -56,7 +62,7 @@ router.route('/delete').delete(async(req,res)=>{
             console.log(isLogged);
             await session.commitTransaction(); 
             session.endSession()
-            return res.status(200).send({success:true, data: { message:`USER_IS_DELETED`}})
+             res.status(200).send({success:true, data: { message:`USER_IS_DELETED`}})
 
         })
 
@@ -174,8 +180,8 @@ router.route('/').post(async(req,res)=>{
             }
             if(updatedParams?.password){
                 console.log(`token:`, isValidToken);
-                const isValid = await serverValidatePw(isValidToken?.fullName,userEmail,updatedParams?.password,res)
-                if(!isValid?.success) return console.log(isValid); 
+                const isValid = await serverValidatePw(isValidToken?.fullName,userEmail,updatedParams?.password)
+                if(!isValid?.success) return res.status(400).send({success:false, message: isValid?.message}) 
                 console.log(isValid);
                 const salt = bcrypt.genSaltSync(10);
                 const hashPw = bcrypt.hashSync(updatedParams?.password, salt)
