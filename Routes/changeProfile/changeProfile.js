@@ -28,7 +28,7 @@ router.route('/delete').delete(async(req,res)=>{
         if(!userEmail || !accessToken ) return res.status(400).send({success:false, message:Errors.MISSING_ARGUMENTS})
 
         const isValidToken = await verifyAccessToken(accessToken);
-        if(isValidToken?.err) return res.status(400).send({success:false,message:isValidToken?.err})
+        if(isValidToken?.err) return res.status(400).send({success:false,message:isValidToken?.err?.message})
 
         const isLogged = await Login.findOne({email:userEmail});
         if(isLogged === null) {
@@ -49,7 +49,10 @@ router.route('/delete').delete(async(req,res)=>{
                 return res.status(200).send({success:true, data: { message:`USER_IS_DELETED`}})
 
             }
-            if(!updatedParams.password) return res.status(400).send({success:false, message:Errors.MISSING_ARGUMENTS})
+            if(!updatedParams.password){
+                session.abortTransaction()
+                return res.status(400).send({success:false, message:Errors.MISSING_ARGUMENTS})
+            }
             const isValidPw = bcrypt.compareSync(updatedParams?.password, isLogged?.password)
             console.log("ISVALID:",isValidPw)
             if(!isValidPw) return res.status(400).send({success:false,message:Errors.WRONG_PASSWORD})
@@ -68,6 +71,7 @@ router.route('/delete').delete(async(req,res)=>{
 
         
     } catch (error) {
+        session.abortTransaction()
         return res.status(500).send({success:false, message:error})
 
     }

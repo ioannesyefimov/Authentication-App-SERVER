@@ -4,7 +4,7 @@ import cors from 'cors'
 import {Login,User} from './MongoDb/models/index.js'
 dotenv.config()
 
-import { uploadRoute, GoogleRoute, GitHubRoute, UserDataRoute, RegisterRoute, SignInRoute, TokenRoute, changeProfileRoute} from './Routes/index.js'
+import { uploadRoute, GoogleRoute, facebookRoute, GitHubRoute, UserDataRoute, RegisterRoute, SignInRoute, TokenRoute, changeProfileRoute} from './Routes/index.js'
 import connectDB from './MongoDb/connect.js'
 const app = express();
 
@@ -26,6 +26,7 @@ app.use('/api/auth/register', RegisterRoute)
 app.use('/api/auth/signin', SignInRoute)
 
 app.use('/api/auth/github', GitHubRoute)
+app.use('/api/auth/facebook', facebookRoute)
 app.use('/api/auth/google', GoogleRoute)
 app.use('/api/auth/user', UserDataRoute)
 

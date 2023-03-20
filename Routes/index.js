@@ -6,6 +6,7 @@ import GitHubRoute from './githubAuthRoute.js'
 import UserDataRoute from './getUserData.js'
 import uploadRoute from './uploadRoute/uploadRoute.js'
 import changeProfileRoute from './changeProfile/changeProfile.js'
+import facebookRoute from './facebookAuthRoute.js'
 export {
- SignInRoute,changeProfileRoute, GoogleRoute,GitHubRoute,UserDataRoute ,TokenRoute, RegisterRoute,uploadRoute
+ SignInRoute, facebookRoute, changeProfileRoute, GoogleRoute,GitHubRoute,UserDataRoute ,TokenRoute, RegisterRoute,uploadRoute
 }
