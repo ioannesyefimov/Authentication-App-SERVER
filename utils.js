@@ -1,4 +1,17 @@
 import jwt from 'jsonwebtoken'
+
+
+export function checkError(error,res){
+    let errors = {};
+    
+    Object.keys(error.errors).forEach((key)=>{
+        errors[key] = error.errors[key]?.message;
+        
+    })
+    console.log(error)
+    return res.status(400).send({success:false, message:errors})
+  
+}
 export function validatePassword(password, name){
     // check whether password doesn't contains at least 
     // 1 uppercase, 1 lowercase, 1 number, and 1 special character. 
@@ -55,8 +68,8 @@ export function validatePassword(password, name){
 }
 
 export const Errors = {
-  INVALID_PASSWORD: `Password must be in English and contains at least one uppercase and lowercase character, one number, and one special character`,
-  PASSWORD_CONTAINS_NAME: `PASSWORD_MUST_NOT_CONTAIN_USER'S_INPUT`,
+  INVALID_PASSWORD: `must be in English and contains at least one uppercase and lowercase character, one number, and one special character`,
+  PASSWORD_CONTAINS_NAME: `MUST_NOT_CONTAIN_USER'S_INPUT`,
   USER_EXIST: 'USER_ALREADY_EXISTS',
   EMAIL_EXIST: 'EMAIL_ALREADY_EXISTS',
   NOT_FOUND: 'NOT_FOUND',

@@ -4,7 +4,7 @@ import bcrypt from 'bcrypt'
 
 import jwt from 'jsonwebtoken'
 import { conn } from '../MongoDb/connect.js'
-import { validatePassword, Errors } from '../utils.js'
+import {checkError, validatePassword, Errors } from '../utils.js'
 
 import User from '../MongoDb/models/user.js'
 import Login from '../MongoDb/models/login.js'
@@ -105,6 +105,9 @@ router.route('/').post(async(req,res)=>{
         })
     
     } catch (error) {
+        if(error.name === 'ValidationError'){
+            return checkError(error,res)
+        }
         console.log(`error: `, error)
         
         res.status(500).send({success:false, message: error})

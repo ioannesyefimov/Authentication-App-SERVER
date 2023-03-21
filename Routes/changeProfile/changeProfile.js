@@ -3,7 +3,7 @@ import * as dotenv from "dotenv"
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 
-import { Errors, isTrue } from '../../utils.js'
+import { checkError, Errors, isTrue } from '../../utils.js'
 import {Login,User} from '../../MongoDb/models/index.js'
 import { serverValidatePw } from '../RegisterRoute.js'
 import { validatePassword, verifyAccessToken } from '../../utils.js'
@@ -23,12 +23,12 @@ router.route('/delete').delete(async(req,res)=>{
         console.log(`DELETE USER IS WORKING`)
         const session = await conn.startSession()
 
-        const {userEmail, updatedParams,accessToken} = req.body
+        const {userEmail, updatedParams,accessToken,deletedThrough} = req.body
         console.log(`body:`, req.body);
         if(!userEmail || !accessToken ) return res.status(400).send({success:false, message:Errors.MISSING_ARGUMENTS})
 
         const isValidToken = await verifyAccessToken(accessToken);
-        if(isValidToken?.err) return res.status(400).send({success:false,message:isValidToken?.err?.message})
+        if(isValidToken?.err) return res.status(400).send({success:false,message:isValidToken?.err?.message || isValidToken?.err})
 
         const isLogged = await Login.findOne({email:userEmail});
         if(isLogged === null) {
@@ -36,12 +36,15 @@ router.route('/delete').delete(async(req,res)=>{
         };
       
         return await session.withTransaction(async()=>{
-            if(!isLogged?.password && isLogged?.loggedThrough !== 'Internal'){
+            console.log(`isLogged: `, isLogged)
+            if(isLogged?.loggedThrough === deletedThrough && isLogged?.loggedThrough !== 'Internal'){
                 let isDeletedLOGIN = await Login.deleteOne({email: userEmail}, {session});
                 let isDeletedUSER = await User.deleteOne({email: userEmail}, {session});
 
-                if(isDeletedUSER.acknowledged && isDeletedUSER?.deletedCount === 0 || isDeletedLOGIN.acknowledged && isDeletedLOGIN?.deletedCount == 0){
-                    session.abortTransaction()
+                if(isDeletedUSER?.deletedCount === 0 ||  isDeletedLOGIN?.deletedCount === 0){
+                    await session.abortTransaction()
+                    console.log(`USER:`, isDeletedUSER);
+                    console.log(`LOGIN:`, isDeletedLOGIN);
                     return res.status(500).send({success:false, message: Errors?.ABORTED_TRANSACTION})
                 }
                 console.log(`USER:`, isDeletedUSER);
@@ -49,7 +52,7 @@ router.route('/delete').delete(async(req,res)=>{
                 return res.status(200).send({success:true, data: { message:`USER_IS_DELETED`}})
 
             }
-            if(!updatedParams.password){
+            if(!updatedParams?.password && isLogged?.password){
                 session.abortTransaction()
                 return res.status(400).send({success:false, message:Errors.MISSING_ARGUMENTS})
             }
@@ -71,7 +74,10 @@ router.route('/delete').delete(async(req,res)=>{
 
         
     } catch (error) {
-        session.abortTransaction()
+        console.log(error)
+        if(error.name === 'ValidationError'){
+            return checkError(error,res)
+        }
         return res.status(500).send({success:false, message:error})
 
     }
@@ -136,14 +142,7 @@ router.route('/').post(async(req,res)=>{
                 
             }
             if(updatedParams?.phone){
-                let isValid = validateNumber(updatedParams?.phone)
-                
-                if(!isValid){
-                    changesArray.newPhone = Errors?.INVALID_NUMBER
-                    throw new Error({message: Errors?.INVALID_NUMBER})
-                } 
-               
-                  let user=   await User.updateOne({email: userEmail}, {phone :updatedParams?.phone },  {upsert:true}, {session});
+                let user=   await User.updateOne({email: userEmail}, {phone :updatedParams?.phone },  {upsert:true}, {session});
                 if (user?.modifiedCount === 0 && user?.acknowledged ){
                     changesArray.newPhone = `${updatedParams?.phone}  hasn't been applied`
                      console.log(changesArray.phone)
@@ -168,7 +167,7 @@ router.route('/').post(async(req,res)=>{
             if(updatedParams?.picture){
                 console.log(`picture: ${updatedParams?.picture}`)
                 let uri = await handleUploadPicture(updatedParams?.picture);
-                if(!uri?.success) return res.status(400).send({success:false, message: uri?.message})
+                if(!uri?.success) return res.status(400).send({success:false, message: {picture : uri?.message} })
 
                 let user=   await User.updateOne({email: userEmail}, {picture: uri?.url },  {upsert:true}, {session});
                 console.log(user);
@@ -185,7 +184,7 @@ router.route('/').post(async(req,res)=>{
             if(updatedParams?.password){
                 console.log(`token:`, isValidToken);
                 const isValid = await serverValidatePw(isValidToken?.fullName,userEmail,updatedParams?.password)
-                if(!isValid?.success) return res.status(400).send({success:false, message: isValid?.message}) 
+                if(!isValid?.success) return res.status(400).send({success:false, message: {password : isValid?.message}}) 
                 console.log(isValid);
                 const salt = bcrypt.genSaltSync(10);
                 const hashPw = bcrypt.hashSync(updatedParams?.password, salt)
@@ -222,6 +221,10 @@ router.route('/').post(async(req,res)=>{
         })
 
     } catch (error) {
+        console.log(error)
+        if(error.name === 'ValidationError'){
+          return checkError(error,res)
+        }
         return res.status(500).send({success:false,message:error |`SOMETHING WENT WRONG`})
 
     }

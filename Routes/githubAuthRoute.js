@@ -7,7 +7,7 @@ import User from '../MongoDb/models/user.js'
 import Login from '../MongoDb/models/login.js'
 import { generateAccessToken,generateRefreshToken } from './tokenRoute.js';
 import jwt from 'jsonwebtoken'
-import { Errors } from "../utils.js"
+import { Errors, checkError } from "../utils.js"
 
 dotenv.config()
 const router = express.Router()
@@ -61,6 +61,9 @@ export const handleGithubSingin = async(accessToken ,res)=>{
         })
         
     } catch (error) {
+        if(error.name === 'ValidationError'){
+            return checkError(error,res)
+        }
         console.log(error)
         res.status(500).send({success:false, message:error})       
     }
@@ -128,6 +131,9 @@ router.route('/register').post(async(req,res) =>{
         })
 
     } catch (error) {
+        if(error.name === 'ValidationError'){
+            return checkError(error,res)
+        }
         console.log(error)
         res.status(500).send({success:false, message:error})       
     }
@@ -156,6 +162,9 @@ router.route('/getAccessToken').get( async (req,res) =>{
             return res.status(200).send({success:true,data: {accessToken: ghResponse.access_token}})
         
     } catch(error){
+        if(error.name === 'ValidationError'){
+            return checkError(error,res)
+        }
        console.log(error)
         return res.status(500).send({success:false,message:error})
     }
