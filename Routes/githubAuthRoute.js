@@ -61,11 +61,7 @@ export const handleGithubSingin = async(accessToken ,res)=>{
         })
         
     } catch (error) {
-        if(error.name === 'ValidationError'){
-            return checkError(error,res)
-        }
-        console.log(error)
-        res.status(500).send({success:false, message:error})       
+        return checkError(error,res)
     }
 }
 
@@ -131,6 +127,7 @@ router.route('/register').post(async(req,res) =>{
         })
 
     } catch (error) {
+        return checkError(error,res)
         if(error.name === 'ValidationError'){
             return checkError(error,res)
         }
@@ -162,6 +159,7 @@ router.route('/getAccessToken').get( async (req,res) =>{
             return res.status(200).send({success:true,data: {accessToken: ghResponse.access_token}})
         
     } catch(error){
+        return checkError(error,res)
         if(error.name === 'ValidationError'){
             return checkError(error,res)
         }
@@ -215,6 +213,7 @@ router.route('/getUserToken').get(async(req,res)=>{
         })
 
     } catch (error){
+        return checkError(error,res)
         return res.status(500).send({success:false,message:error ||`SOMETHING WENT WRONG`})
     }
 }

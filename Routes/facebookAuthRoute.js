@@ -5,7 +5,7 @@ import * as queryString from 'query-string';
 
 import jwt from 'jsonwebtoken'
 import { conn } from '../MongoDb/connect.js'
-import { validatePassword, Errors } from '../utils.js'
+import { validatePassword, Errors, checkError } from '../utils.js'
 
 import User from '../MongoDb/models/user.js'
 import Login from '../MongoDb/models/login.js'
@@ -81,9 +81,7 @@ router.route('/register').post(async(req,res)=>{
         })
     
     } catch (error) {
-        console.log(`error: `, error)
-        
-        res.status(500).send({success:false, message: error})
+        return checkError(error,res)
     }
 })
 
@@ -126,9 +124,7 @@ router.route('/signin').post(async(req,res)=>{
         res.status(201).send({success:true,data:{accessToken, loggedThrough: user?.loggedThrough}});
     
     } catch (error) {
-        console.log(`error: `, error)
-        
-        res.status(500).send({success:false, message: error})
+        return checkError(error,res)
     }
 })
 

@@ -74,12 +74,7 @@ router.route('/delete').delete(async(req,res)=>{
 
         
     } catch (error) {
-        console.log(error)
-        if(error.name === 'ValidationError'){
             return checkError(error,res)
-        }
-        return res.status(500).send({success:false, message:error})
-
     }
 
 })

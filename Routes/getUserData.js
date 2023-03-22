@@ -8,7 +8,7 @@ import Login from '../MongoDb/models/login.js'
 
 
 import jwt from 'jsonwebtoken'
-import { Errors, verifyAccessToken } from '../utils.js'
+import { checkError, Errors, verifyAccessToken } from '../utils.js'
 import { generateAccessToken } from './tokenRoute.js'
 
 dotenv.config();
@@ -45,6 +45,7 @@ export const handleUserData = async(accessToken,loggedThrough,res) => {
         }
     }catch(err){
         console.log(err);
+        return checkError(error,res)
         return res.status(500).send({success:false, message:err})
     }
     }
@@ -77,6 +78,7 @@ router.route('/').post(async(req,res)=>{
         }
     } catch (error) {
         console.log(`error: `, error)
+        return checkError(error,res)
         return res.status(500).send({success: false, message: error})
     }
 })

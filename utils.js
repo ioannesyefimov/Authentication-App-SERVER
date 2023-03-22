@@ -3,13 +3,39 @@ import jwt from 'jsonwebtoken'
 
 export function checkError(error,res){
     let errors = {};
-    
-    Object.keys(error.errors).forEach((key)=>{
-        errors[key] = error.errors[key]?.message;
-        
-    })
-    console.log(error)
-    return res.status(400).send({success:false, message:errors})
+    if(error.name === 'ValidationError'){
+      Object.keys(error.errors).forEach((key)=>{
+          errors[key] = error.errors[key]?.message;
+          
+      })
+      console.log(error)
+      return res.status(400).send({success:false, message:errors})
+
+    } 
+    if(error?.code){
+      let errors = {}
+      let filteredErrs = Object.keys(error).filter(
+          (err, i)=> err !== 'code' && err !=='index') 
+    console.log(filteredErrs)       
+    filteredErrs = filteredErrs.forEach((key,ind)=>{
+      if(key === 'keyPattern'){
+          errors['Duplicate_Pattern'] = error[key]
+      } else
+      if(key === 'keyValue'){
+          errors['Duplicate_Value'] = error[key]
+      }else{
+
+          errors[key] = error[key]
+      }
+      })
+      console.log(`FILTERED: `, filteredErrs)
+      console.log(`error: `, error)
+      console.log(`errors: `, errors)
+      return res.status(400).send({succes:false,message: errors})
+    }
+
+    return res.status(400).send({succes:false,message: error})
+
   
 }
 export function validatePassword(password, name){

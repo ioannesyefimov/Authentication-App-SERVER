@@ -1,7 +1,7 @@
 import express from 'express'
 import * as dotenv from "dotenv"
 import  verifyGoogleToken  from '../SocialAuth/googleAuth.js'
-import { Errors } from '../utils.js'
+import { checkError, Errors } from '../utils.js'
 
 import jwt from 'jsonwebtoken'
 import User from '../MongoDb/models/user.js'
@@ -58,9 +58,7 @@ export const handleGoogleSingin = async(credentials, res) =>{
                 }
             });
     } catch (error) {
-        res.status(500).json({
-            message: error?.message || error,
-        })
+        return checkError(error,res)
     }
 }
 
@@ -114,9 +112,7 @@ router.route('/signin').post(async(req,res)=>{
             });
         
     } catch (error) {
-        res.status(500).json({
-            message: error?.message || error,
-        })
+        return checkError(error,res)
     }
 })
 
@@ -196,6 +192,7 @@ router.route('/register').post(async(req,res)=>{
         }
         
     } catch (error) {
+        return checkError(error,res)
         console.log(error)
         res.status(500).send({success:false, message:error})  
     }

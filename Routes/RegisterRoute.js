@@ -105,12 +105,8 @@ router.route('/').post(async(req,res)=>{
         })
     
     } catch (error) {
-        if(error.name === 'ValidationError'){
-            return checkError(error,res)
-        }
-        console.log(`error: `, error)
-        
-        res.status(500).send({success:false, message: error})
+        console.log(`trigger err`)
+        return checkError(error,res)
     }
 })
 
